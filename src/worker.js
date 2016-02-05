@@ -87,7 +87,9 @@ function addFeature(id, directory) {
     return;
   }
 
-  var pathToJson = path.normalize([directory, 'data', id.substr(0, 3), id.substr(3, 3), id.substr(6), id + '.geojson'].join(path.sep));
+  var pathToJson = path.resolve(path.normalize(
+    [directory, 'data', id.substr(0, 3), id.substr(3, 3), id.substr(6), id + '.geojson'].join(path.sep)));
+
   var feature = JSON.parse(fs.readFileSync(pathToJson));
 
   var simple = simplifyFeature(feature);

@@ -4,7 +4,8 @@ var map_stream = require('through2-map');
 var filter_stream = require('through2-filter');
 var _ = require('lodash');
 var util = require('util');
-var sep = require('path').sep;
+var path = require('path');
+var sep = path.sep;
 
 /*
   this regex is used to test/match strings from WOF meta files that can take
@@ -40,12 +41,15 @@ var normalize_file_path = function normalize_file_path() {
 */
 var file_is_readable = function file_is_readable(dataDirectory) {
   return filter_stream.obj(function(filename) {
+
+    var fullPath = path.resolve(path.normalize(dataDirectory + sep + filename));
+
     try {
-      fs.accessSync(dataDirectory + sep + filename, fs.R_OK);
+      fs.accessSync(fullPath, fs.R_OK);
       return true;
     }
     catch (err) {
-      console.error(util.format('data file cannot be read: %s', dataDirectory + sep + filename));
+      console.error(util.format('data file cannot be read: %s', fullPath, err.message));
       return false;
     }
   });
