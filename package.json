@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
+    "more-memory": "node --max-old-space-size=10000 src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Diana Shkolnikov <dianashk@gmail.com>",
@@ -15,22 +16,15 @@
     "csv-parse": "^1.0.1",
     "event-stream": "^3.3.2",
     "express": "^4.13.4",
-    "geojson-stream": "0.0.1",
     "lodash": "^4.2.1",
     "pelias-config": "^1.0.3",
     "pelias-logger": "0.0.8",
     "polygon-lookup": "^1.0.2",
-    "terraformer": "^1.0.5",
-    "terraformer-geostore": "^1.0.4",
-    "terraformer-geostore-leveldb": "^1.1.1",
-    "terraformer-geostore-localstorage": "^1.0.0",
-    "terraformer-geostore-memory": "^1.0.0",
-    "terraformer-rtree": "^1.0.0",
+    "simplify-js": "^1.2.1",
     "through2": "^2.0.0",
     "through2-filter": "^2.0.0",
     "through2-map": "^2.0.0",
     "through2-sink": "^1.0.0",
-    "turf-simplify": "^1.0.3",
     "uid": "0.0.2"
   }
 }
