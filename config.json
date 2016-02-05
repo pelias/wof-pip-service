@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "whosonfirst": {
+      "datapath": "/Users/diana/DATA/whosonfirst-data/"
+    }
+  }
+}
