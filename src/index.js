@@ -15,26 +15,9 @@ var async = require('async');
 var uid = require('uid');
 var _ = require('lodash');
 
-
 var workers = [];
 
 var responseQueue = {};
-
-function hasDataDirectory() {
-  return peliasConfig.imports.hasOwnProperty('whosonfirst') &&
-    peliasConfig.imports.whosonfirst.hasOwnProperty('datapath');
-}
-
-if (!hasDataDirectory()) {
-  console.error('Could not find whosonfirst data directory in configuration');
-  process.exit( 2 );
-}
-
-var directory = peliasConfig.imports.whosonfirst.datapath;
-
-if (directory.slice(-1) !== '/') {
-  directory = directory + '/';
-}
 
 var defaultLayers = module.exports.defaultLayers = [
   //'continent',
@@ -51,13 +34,25 @@ var defaultLayers = module.exports.defaultLayers = [
 ];
 
 module.exports.create = function createPIPService(layers, callback) {
+
+  if (!hasDataDirectory()) {
+    logger.error('Could not find whosonfirst data directory in configuration');
+    process.exit( 2 );
+  }
+
+  var directory = peliasConfig.imports.whosonfirst.datapath;
+
+  if (directory.slice(-1) !== '/') {
+    directory = directory + '/';
+  }
+
   if (!(layers instanceof Array) && typeof layers === 'function') {
     callback = layers;
     layers = defaultLayers;
   }
 
   async.forEach(layers, function (layer, done) {
-      startWorker(layer, function (err, worker) {
+      startWorker(directory, layer, function (err, worker) {
         workers.push(worker);
         done();
       });
@@ -83,7 +78,7 @@ module.exports.create = function createPIPService(layers, callback) {
   );
 };
 
-function startWorker(layer, callback) {
+function startWorker(directory, layer, callback) {
 
   var worker = childProcess.fork(path.join(__dirname, 'worker'));
 
@@ -125,4 +120,9 @@ function handleResults(msg) {
     responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
     delete responseQueue[msg.id];
   }
+}
+
+function hasDataDirectory() {
+  return peliasConfig.imports.hasOwnProperty('whosonfirst') &&
+    peliasConfig.imports.whosonfirst.hasOwnProperty('datapath');
 }
