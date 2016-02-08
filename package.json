@@ -5,12 +5,10 @@
   "main": "src/index.js",
   "scripts": {
     "download": "node src/downloadData.js",
-    "main": "PELIAS_CONFIG=${PWD}/config.json node src/index.js",
-    "start": "npm run download; npm run main",
-    "more-memory": "node --max-old-space-size=10000 src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "PELIAS_CONFIG=${PWD}/config.json node server.js",
+    "test": "PELIAS_CONFIG=${PWD}/config.json node test/testDependencyMode.js"
   },
-  "author": "Diana Shkolnikov <dianashk@gmail.com>",
+  "author": "Mapzen",
   "license": "MIT",
   "engines": {
     "node": ">= 0.12.0"
@@ -23,6 +21,7 @@
     "express": "^4.13.4",
     "fs-extra": "^0.26.5",
     "lodash": "^4.2.1",
+    "microtime": "^2.0.0",
     "pelias-config": "^1.0.3",
     "pelias-logger": "0.0.8",
     "polygon-lookup": "^1.0.2",

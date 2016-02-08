@@ -10,6 +10,7 @@ var sink = require( 'through2-sink' );
 var logger = require( 'pelias-logger').get('admin-lookup:worker');
 var PolygonLookup = require('polygon-lookup');
 var simplify = require('simplify-js');
+var microtime = require('microtime');
 
 var readStream = require('./readStream');
 var wofRecordStream = require('./wofRecordStream');
@@ -29,7 +30,7 @@ var context = {
  */
 function messageHandler( msg ) {
 
-  logger.debug('MESSAGE: ', msg.type);
+  //logger.debug('MESSAGE: ', msg.type);
 
   switch (msg.type) {
     case 'load'   : return handleLoadMsg(msg);
@@ -64,7 +65,7 @@ function handleLoadMsg(msg) {
 
         count++;
         if (count % 10000 === 0) {
-          logger.verbose('Count:', count, 'Percentage:', count/totalCount*100);
+          logger.verbose('Layer:', context.name, 'Count:', count, 'Percentage:', count/totalCount*100);
         }
 
         addFeature(data.id.toString(), msg.directory);
@@ -166,7 +167,12 @@ function handleSearch(msg) {
  * Search `adminLookup` for `latLon`.
  */
 function search( latLon ){
-  var poly = context.adminLookup.search( latLon.lon, latLon.lat );
+  var startTime = microtime.now();
+
+  var poly = context.adminLookup.search( latLon.longitude, latLon.latitude );
+
+  logger.verbose('Worker lookup took ' + (microtime.now() - startTime) + ' usecs');
+
   return (poly === undefined) ? {} : poly.properties;
 }
 

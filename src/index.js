@@ -13,9 +13,10 @@ var logger = require( 'pelias-logger' ).get( 'wof-pip-service:master' );
 var peliasConfig = require( 'pelias-config' ).generate();
 var async = require('async');
 var uid = require('uid');
-var express = require('express');
-var app = express();
 var _ = require('lodash');
+
+
+var workers = [];
 
 var responseQueue = {};
 
@@ -35,7 +36,7 @@ if (directory.slice(-1) !== '/') {
   directory = directory + '/';
 }
 
-var layers = [
+var defaultLayers = module.exports.defaultLayers = [
   //'continent',
   'country', // 216
   'county', // 18166
@@ -49,37 +50,38 @@ var layers = [
   'region' // 4698
 ];
 
-var workers = [];
+module.exports.create = function createPIPService(layers, callback) {
+  if (!(layers instanceof Array) && typeof layers === 'function') {
+    callback = layers;
+    layers = defaultLayers;
+  }
 
-async.forEach(layers, function (layer, done) {
-    startWorker(layer, function (err, worker) {
-      workers.push(worker);
-      done();
-    });
-  },
-  function end() {
-
-    app.get('/lookup', function (req, res) {
-      logger.debug(req.query);
-
-      var id = uid(10);
-
-      responseQueue[id] = {
-        results: [],
-        resultCount: 0,
-        res: res
-      };
-      workers.forEach(function (worker) {
-        searchWorker(id, worker, req.query);
+  async.forEach(layers, function (layer, done) {
+      startWorker(layer, function (err, worker) {
+        workers.push(worker);
+        done();
       });
+    },
+    function end() {
+      logger.info('PIP Service Loading Completed!!!');
 
-    });
+      callback(null, {
+        lookup: function (latitude, longitude, responseCallback) {
+          var id = uid(10);
 
-    app.listen(process.env.HOST_PORT || 3333, function () {
-      console.log('PIP service listening on port 3333!');
-    });
-
-  });
+          responseQueue[id] = {
+            results: [],
+            resultCount: 0,
+            responseCallback: responseCallback
+          };
+          workers.forEach(function (worker) {
+            searchWorker(id, worker, {latitude: latitude, longitude: longitude});
+          });
+        }
+      });
+    }
+  );
+};
 
 function startWorker(layer, callback) {
 
@@ -112,7 +114,7 @@ function searchWorker(id, worker, coords) {
 }
 
 function handleResults(msg) {
-  logger.info('RESULTS:', JSON.stringify(msg, null, 2));
+  //logger.info('RESULTS:', JSON.stringify(msg, null, 2));
 
   if (!_.isEmpty(msg.results) ) {
     responseQueue[msg.id].results.push(msg.results);
@@ -120,7 +122,7 @@ function handleResults(msg) {
   responseQueue[msg.id].resultCount++;
 
   if (responseQueue[msg.id].resultCount === workers.length) {
-    responseQueue[msg.id].res.json(responseQueue[msg.id].results);
+    responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
     delete responseQueue[msg.id];
   }
 }
