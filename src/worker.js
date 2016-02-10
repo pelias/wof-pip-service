@@ -171,8 +171,6 @@ function search( latLon ){
 
   var poly = context.adminLookup.search( latLon.longitude, latLon.latitude );
 
-  logger.verbose('Worker lookup took ' + (microtime.now() - startTime) + ' usecs');
-
   return (poly === undefined) ? {} : poly.properties;
 }
 
