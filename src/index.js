@@ -61,6 +61,11 @@ module.exports.create = function createPIPService(layers, callback) {
       logger.info('PIP Service Loading Completed!!!');
 
       callback(null, {
+        end: function end() {
+          workers.forEach(function (worker) {
+            worker.kill();
+          });
+        },
         lookup: function (latitude, longitude, responseCallback) {
           var id = uid(10);
 

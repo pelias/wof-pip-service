@@ -47,7 +47,7 @@ createPIPService(layers, function (err, pipService) {
 
     fs.writeFileSync('./actualTestResuts.json', JSON.stringify(inputData, null, 2));
 
-    process.exit();
+    pipService.end();
   });
 
 });
