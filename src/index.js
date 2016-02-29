@@ -11,69 +11,79 @@ var path = require('path');
 var childProcess = require( 'child_process' );
 var logger = require( 'pelias-logger' ).get( 'wof-pip-service:master' );
 var peliasConfig = require( 'pelias-config' ).generate();
+var async = require('async');
 var uid = require('uid');
-var express = require('express');
-var app = express();
-
-var responseQueue = {};
-
-function hasDataDirectory() {
-  return peliasConfig.imports.hasOwnProperty('whosonfirst') &&
-    peliasConfig.imports.whosonfirst.hasOwnProperty('datapath');
-}
-
-if (!hasDataDirectory()) {
-  console.error('Could not find whosonfirst data directory in configuration');
-  process.exit( 2 );
-}
-
-var directory = peliasConfig.imports.whosonfirst.datapath;
-
-if (directory.slice(-1) !== '/') {
-  directory = directory + '/';
-}
-
-var layers = [
-  //'continent',
-  'country', // 216
-  //'county', // 18166
-  //'dependency', // 39
-  //'disputed', // 39
-  //'localadmin', // 106880
-  //'locality', // 160372
-  //'macrocounty', // 350
-  //'macroregion', // 82
-  //'neighbourhood', // 62936
-  'region' // 4698
-];
+var _ = require('lodash');
 
 var workers = [];
 
-startWorker(layers, function (err, worker) {
-  workers.push(worker);
+var responseQueue = {};
 
-  app.get('/lookup', function (req, res) {
-    logger.debug(req.query);
+var defaultLayers = module.exports.defaultLayers = [
+  //'continent',
+  'country', // 216
+  'county', // 18166
+  'dependency', // 39
+  'disputed', // 39
+  'localadmin', // 106880
+  'locality', // 160372
+  'macrocounty', // 350
+  'macroregion', // 82
+  'neighbourhood', // 62936
+  'region' // 4698
+];
 
-    var id = uid(10);
+module.exports.create = function createPIPService(layers, callback) {
 
-    responseQueue[id] = {
-      results: [],
-      res: res
-    };
-    workers.forEach(function (worker) {
-      searchWorker(id, worker, req.query);
-    });
+  if (!hasDataDirectory()) {
+    logger.error('Could not find whosonfirst data directory in configuration');
+    process.exit( 2 );
+  }
 
-  });
+  var directory = peliasConfig.imports.whosonfirst.datapath;
 
-  app.listen(3333, function () {
-    console.log('PIP service listening on port 3333!');
-  });
+  if (directory.slice(-1) !== '/') {
+    directory = directory + '/';
+  }
 
-});
+  if (!(layers instanceof Array) && typeof layers === 'function') {
+    callback = layers;
+    layers = defaultLayers;
+  }
 
-function startWorker(layers, callback) {
+  async.forEach(layers, function (layer, done) {
+      startWorker(directory, layer, function (err, worker) {
+        workers.push(worker);
+        done();
+      });
+    },
+    function end() {
+      logger.info('PIP Service Loading Completed!!!');
+
+      callback(null, {
+        end: function end() {
+          workers.forEach(function (worker) {
+            worker.kill();
+          });
+        },
+        lookup: function (latitude, longitude, responseCallback) {
+          var id = uid(10);
+
+          responseQueue[id] = {
+            results: [],
+            resultCount: 0,
+            responseCallback: responseCallback
+          };
+          workers.forEach(function (worker) {
+            searchWorker(id, worker, {latitude: latitude, longitude: longitude});
+          });
+        }
+      });
+    }
+  );
+};
+
+function startWorker(directory, layer, callback) {
 
   var worker = childProcess.fork(path.join(__dirname, 'worker'));
 
@@ -90,8 +100,7 @@ function startWorker(layers, callback) {
 
   worker.send({
     type: 'load',
-    name: 'worker',
-    layers: layers,
+    name: layer,
     directory: directory
   });
 }
@@ -101,21 +110,24 @@ function searchWorker(id, worker, coords) {
     type: 'search',
     id: id,
     coords: coords
-  });
+  })
 }
 
 function handleResults(msg) {
-  logger.info('RESULTS:', JSON.stringify(msg, null, 2));
+  //logger.info('RESULTS:', JSON.stringify(msg, null, 2));
 
-  if (msg.results instanceof Array) {
-    responseQueue[msg.id].results = responseQueue[msg.id].results.concat(msg.results);
-  }
-  else {
+  if (!_.isEmpty(msg.results) ) {
     responseQueue[msg.id].results.push(msg.results);
   }
+  responseQueue[msg.id].resultCount++;
 
-  logger.info('RESULTS:', JSON.stringify(responseQueue[msg.id].results, null, 2));
+  if (responseQueue[msg.id].resultCount === workers.length) {
+    responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
+    delete responseQueue[msg.id];
+  }
+}
 
-  responseQueue[msg.id].res.json(responseQueue[msg.id].results);
-  delete responseQueue[msg.id];
+function hasDataDirectory() {
+  return peliasConfig.imports.hasOwnProperty('whosonfirst') &&
+    peliasConfig.imports.whosonfirst.hasOwnProperty('datapath');
 }

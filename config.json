@@ -1,7 +1,7 @@
 {
   "imports": {
     "whosonfirst": {
-      "datapath": "/Users/diana/DATA/whosonfirst-data/"
+      "datapath": "./wof_data/"
     }
   }
 }

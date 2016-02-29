@@ -7,14 +7,10 @@
 var fs = require('fs');
 var path = require('path');
 var sink = require( 'through2-sink' );
-var through = require( 'through2' );
 var logger = require( 'pelias-logger').get('admin-lookup:worker');
-
-// require geostore, an RTree index, and a LevelDB data store
-var GeoStore = require('terraformer-geostore').GeoStore;
-var RTree = require('terraformer-rtree').RTree;
-var LevelStore = require('terraformer-geostore-leveldb');
-
+var PolygonLookup = require('polygon-lookup');
+var simplify = require('simplify-js');
+var microtime = require('microtime');
 
 var readStream = require('./readStream');
 var wofRecordStream = require('./wofRecordStream');
@@ -34,7 +30,7 @@ var context = {
  */
 function messageHandler( msg ) {
 
-  logger.debug('MESSAGE: ', msg.type);
+  //logger.debug('MESSAGE: ', msg.type);
 
   switch (msg.type) {
     case 'load'   : return handleLoadMsg(msg);
@@ -45,6 +41,7 @@ function messageHandler( msg ) {
 
 process.on( 'message', messageHandler );
 
+
 function elapsedTime() {
   return ((Date.now() - context.startTime)/1000) + ' secs';
 }
@@ -54,75 +51,95 @@ function handleLoadMsg(msg) {
   context.name = msg.name;
   context.startTime = Date.now();
 
-  context.store = new GeoStore({
-    store: new LevelStore(),
-    index: new RTree()
-  });
-
   var wofRecords = {};
-  readStream(msg.directory, msg.layers, wofRecords, function() {
+  readStream(msg.directory, [msg.name], wofRecords, function() {
+
     var totalCount = Object.keys(wofRecords).length;
     logger.info(totalCount + ' record ids loaded in ' + elapsedTime());
 
     var count = 0;
+
     // a stream of WOF records
     wofRecordStream.createWofRecordsStream(wofRecords)
-      .pipe(through.obj(function (data, enc, next) {
+      .pipe(sink.obj(function (data) {
 
         count++;
         if (count % 10000 === 0) {
-          logger.verbose('Count:', count, 'Percentage:', count/totalCount*100);
+          logger.verbose('Layer:', context.name, 'Count:', count, 'Percentage:', count/totalCount*100);
         }
 
-        addFeature(data.id.toString(), msg.directory, next);
-
-      }))
-      .pipe(sink.obj(function (data) {
-
+        addFeature(data.id.toString(), msg.directory);
       }))
       .on('finish', function () {
 
-        logger.info('finished loading ' + count + ' features in ' + elapsedTime());
+        logger.info('finished building FeatureCollection in ' + elapsedTime());
 
         loadFeatureCollection();
+
+        logger.info('finished loading ' + count + ' features in ' + elapsedTime());
       });
   });
 
 }
 
-function addFeature(id, directory, callback) {
+function addFeature(id, directory) {
   if (id.length < 6) {
     logger.debug('Skipping id: ', id);
     return;
   }
 
-  var pathToJson = path.normalize([directory, 'data', id.substr(0, 3), id.substr(3, 3), id.substr(6), id + '.geojson'].join(path.sep));
+  var pathToJson = path.resolve(path.normalize(
+    [directory, 'data', id.substr(0, 3), id.substr(3, 3), id.substr(6), id + '.geojson'].join(path.sep)));
+
   var feature = JSON.parse(fs.readFileSync(pathToJson));
 
-  //var simple = simplify(feature, 0.0001, true);
-
-  //logger.debug(JSON.stringify(Object.keys(feature), null, 2));
-  //logger.debug(JSON.stringify(Object.keys(simple), null, 2));
+  var simple = simplifyFeature(feature);
 
   var smallFeature = {
-    type: 'Feature',
-    id: feature.properties['wof:id'],
     properties: {
       Id: feature.properties['wof:id'],
       Name: feature.properties['wof:name'],
-      Placetype: feature.properties['wof:placetype']
+      Placetype: context.name,
+      Hierarchy: feature.properties['wof:hierarchy']
     },
-    geometry: feature.geometry
+    geometry: ( simple ? simple.geometry : feature.geometry )
   };
 
-  //logger.debug(smallFeature);
+  context.featureCollection.features.push(smallFeature);
+}
 
-  //context.featureCollection.features.push(smallFeature);
-  context.store.add(smallFeature, function (err) {
-    if (err) {
-      logger.error(err);
+function simplifyFeature(feature) {
+  if( feature.geometry !== null ) {
+    switch (feature.geometry.type) {
+      case 'Polygon':
+        var coords = feature.geometry.coordinates[0];
+        feature.geometry.coordinates[0] = simplifyCoords(coords);
+        break;
+
+      case 'MultiPolygon':
+        var polys = feature.geometry.coordinates;
+        polys.forEach(function simplify(coords, ind) {
+          polys[ind][0] = simplifyCoords(coords[0]);
+        });
+        break;
     }
-    callback(null, smallFeature.properties);
+  }
+}
+
+/**
+ * @param {array} coords A 2D GeoJson-style points array.
+ * @return {array} A slightly simplified version of `coords`.
+ */
+function simplifyCoords( coords ){
+  var pts = coords.map( function mapToSimplifyFmt( pt ){
+    return { x: pt[ 0 ], y: pt[ 1 ] };
+  });
+
+  var simplificationRate = 0.0003;
+  var simplified = simplify( pts, simplificationRate, true );
+
+  return simplified.map( function mapToGeoJsonFmt( pt ){
+    return [ pt.x, pt.y ];
   });
 }
 
@@ -130,18 +147,18 @@ function addFeature(id, directory, callback) {
  * Load the layer specified by `layerConfig`.
  */
 function loadFeatureCollection(){
-  logger.info( 'Loaded ', context.name, ' with ', context.featureCollection.features.length, ' features');
+  logger.info( 'Loading ', context.name, ' with ', context.featureCollection.features.length, ' features');
+  context.adminLookup = new PolygonLookup( context.featureCollection );
+  logger.info( 'Done loading ' + context.name );
   process.send( {type: 'loaded', name: context.name} );
 }
 
 function handleSearch(msg) {
-  search(msg.coords, function (err, res) {
-    process.send({
-      name: context.name,
-      type: 'results',
-      id: msg.id,
-      results: res
-    });
+  process.send({
+    name: context.name,
+    type: 'results',
+    id: msg.id,
+    results: search( msg.coords )
   });
 }
 
@@ -149,32 +166,11 @@ function handleSearch(msg) {
 /**
  * Search `adminLookup` for `latLon`.
  */
-function search( latLon, callback ){
+function search( latLon ){
+  var startTime = microtime.now();
 
-  var geojson = {
-    "type": "Point",
-    "coordinates": [latLon.lon, latLon.lat]
-  };
+  var poly = context.adminLookup.search( latLon.longitude, latLon.latitude );
 
-  context.store.contains( geojson, function (err, res) {
-    if (err) {
-      logger.error('GeoStore search resulted in error:', err);
-      return callback(null, {});
-    }
-
-    if (!res || !(res instanceof Array) || res.length === 0) {
-      logger.error('GeoStore search resulted in 0 results', latLon);
-      return callback(null, {});
-    }
-
-    var results = [];
-
-    res.forEach(function (record) {
-      //logger.debug('Results data:', data.properties);
-      results.push(record.properties);
-    });
-
-    callback(null, results);
-  });
+  return (poly === undefined) ? {} : poly.properties;
 }
 
