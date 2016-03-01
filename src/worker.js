@@ -11,6 +11,7 @@ var logger = require( 'pelias-logger').get('admin-lookup:worker');
 var PolygonLookup = require('polygon-lookup');
 var simplify = require('simplify-js');
 var microtime = require('microtime');
+var _ = require('lodash');
 
 var readStream = require('./readStream');
 var wofRecordStream = require('./wofRecordStream');
@@ -82,6 +83,13 @@ function handleLoadMsg(msg) {
 
 }
 
+// this function is used to verify that a US county QS altname is available
+function isUsCounty(feature) {
+  return 'US' === feature.properties['iso:country'] &&
+        'county' === feature.properties['wof:placetype'] &&
+        !_.isUndefined(feature.properties['qs:a2_alt']);
+}
+
 function addFeature(id, directory) {
   if (id.length < 6) {
     logger.debug('Skipping id: ', id);
@@ -104,6 +112,11 @@ function addFeature(id, directory) {
     },
     geometry: ( simple ? simple.geometry : feature.geometry )
   };
+
+  // use QS county altname for name in US
+  if (isUsCounty(feature)) {
+    smallFeature.properties.Name = feature.properties['qs:a2_alt'];
+  }
 
   context.featureCollection.features.push(smallFeature);
 }
@@ -173,4 +186,3 @@ function search( latLon ){
 
   return (poly === undefined) ? {} : poly.properties;
 }
-
