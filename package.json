@@ -1,6 +1,6 @@
 {
   "name": "pelias-wof-pip-service",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Standalone point-in-polygon lookup service'",
   "main": "src/index.js",
   "scripts": {
