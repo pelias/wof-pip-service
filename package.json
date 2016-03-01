@@ -6,7 +6,8 @@
   "scripts": {
     "download": "node src/downloadData.js",
     "start": "PELIAS_CONFIG=${PWD}/config.json node server.js",
-    "test": "PELIAS_CONFIG=${PWD}/config.json node test/testDependencyMode.js"
+    "functional": "PELIAS_CONFIG=${PWD}/config.json node test/testDependencyMode.js",
+    "test": "npm run functional"
   },
   "author": "Mapzen",
   "license": "MIT",
