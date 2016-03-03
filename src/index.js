@@ -15,7 +15,7 @@ var async = require('async');
 var uid = require('uid');
 var _ = require('lodash');
 
-var workers = [];
+var workers = {};
 
 var responseQueue = {};
 
@@ -53,7 +53,7 @@ module.exports.create = function createPIPService(layers, callback) {
 
   async.forEach(layers, function (layer, done) {
       startWorker(directory, layer, function (err, worker) {
-        workers.push(worker);
+        workers[layer] = worker;
         done();
       });
     },
@@ -62,8 +62,8 @@ module.exports.create = function createPIPService(layers, callback) {
 
       callback(null, {
         end: function end() {
-          workers.forEach(function (worker) {
-            worker.kill();
+          Object.keys(workers).forEach(function (layer) {
+            workers[layer].kill();
           });
         },
         lookup: function (latitude, longitude, responseCallback) {
@@ -74,7 +74,8 @@ module.exports.create = function createPIPService(layers, callback) {
             resultCount: 0,
             responseCallback: responseCallback
           };
-          workers.forEach(function (worker) {
+          Object.keys(workers).forEach(function (layer) {
+            var worker = workers[layer];
             searchWorker(id, worker, {latitude: latitude, longitude: longitude});
           });
         }
@@ -121,7 +122,7 @@ function handleResults(msg) {
   }
   responseQueue[msg.id].resultCount++;
 
-  if (responseQueue[msg.id].resultCount === workers.length) {
+  if (responseQueue[msg.id].resultCount === Object.keys(workers).length) {
     responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
     delete responseQueue[msg.id];
   }
