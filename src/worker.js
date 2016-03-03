@@ -56,7 +56,7 @@ function handleLoadMsg(msg) {
   readStream(msg.directory, [msg.name], wofRecords, function() {
 
     var totalCount = Object.keys(wofRecords).length;
-    logger.info(totalCount + ' record ids loaded in ' + elapsedTime());
+    logger.info(totalCount + ' ' + context.name + ' record ids loaded in ' + elapsedTime());
 
     var count = 0;
 
@@ -73,11 +73,11 @@ function handleLoadMsg(msg) {
       }))
       .on('finish', function () {
 
-        logger.info('finished building FeatureCollection in ' + elapsedTime());
+        logger.info(context.name + ' finished building FeatureCollection in ' + elapsedTime());
 
         loadFeatureCollection();
 
-        logger.info('finished loading ' + count + ' features in ' + elapsedTime());
+        logger.info(context.name + ' finished loading ' + count + ' features in ' + elapsedTime());
       });
   });
 
