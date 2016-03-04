@@ -6,8 +6,9 @@
   "scripts": {
     "download": "node src/downloadData.js",
     "start": "PELIAS_CONFIG=${PWD}/config.json node server.js",
-    "functional": "PELIAS_CONFIG=${PWD}/config.json node test/testDependencyMode.js",
-    "test": "npm run functional"
+    "functional": "PELIAS_CONFIG=${PWD}/config.json node test/functional.js",
+    "test": "npm run functional",
+    "postinstall": "npm run download"
   },
   "author": "Mapzen",
   "license": "MIT",
@@ -35,5 +36,8 @@
     "through2-sink": "^1.0.0",
     "uid": "0.0.2",
     "unbzip2-stream": "^1.0.8"
+  },
+  "devDependencies": {
+    "deep-diff": "^0.3.3"
   }
 }

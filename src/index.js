@@ -15,7 +15,7 @@ var async = require('async');
 var uid = require('uid');
 var _ = require('lodash');
 
-var workers = [];
+var workers = {};
 
 var responseQueue = {};
 
@@ -53,7 +53,7 @@ module.exports.create = function createPIPService(layers, callback) {
 
   async.forEach(layers, function (layer, done) {
       startWorker(directory, layer, function (err, worker) {
-        workers.push(worker);
+        workers[layer] = worker;
         done();
       });
     },
@@ -62,20 +62,32 @@ module.exports.create = function createPIPService(layers, callback) {
 
       callback(null, {
         end: function end() {
-          workers.forEach(function (worker) {
-            worker.kill();
+          Object.keys(workers).forEach(function (layer) {
+            workers[layer].kill();
           });
         },
-        lookup: function (latitude, longitude, responseCallback) {
+        lookup: function (latitude, longitude, responseCallback, search_layers) {
+          if (search_layers === undefined) {
+            search_layers = layers;
+          } else {
+            // take the intersection of the valid layers and the layers sent in
+            // so that if any layers are manually disabled for development
+            // everything still works. this also means invalid layers
+            // are silently ignored
+            search_layers = _.intersection(search_layers, layers);
+          }
+
           var id = uid(10);
 
           responseQueue[id] = {
             results: [],
+            search_layers: search_layers,
             resultCount: 0,
             responseCallback: responseCallback
           };
-          workers.forEach(function (worker) {
-            searchWorker(id, worker, {latitude: latitude, longitude: longitude});
+
+          search_layers.forEach(function(layer) {
+            searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
           });
         }
       });
@@ -121,7 +133,7 @@ function handleResults(msg) {
   }
   responseQueue[msg.id].resultCount++;
 
-  if (responseQueue[msg.id].resultCount === workers.length) {
+  if (responseQueue[msg.id].resultCount === responseQueue[msg.id].search_layers.length) {
     responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
     delete responseQueue[msg.id];
   }
