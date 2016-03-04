@@ -35,5 +35,8 @@
     "through2-sink": "^1.0.0",
     "uid": "0.0.2",
     "unbzip2-stream": "^1.0.8"
+  },
+  "devDependencies": {
+    "deep-diff": "^0.3.3"
   }
 }
