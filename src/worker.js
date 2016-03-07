@@ -51,8 +51,7 @@ function handleLoadMsg(msg) {
   context.name = msg.name;
   context.startTime = Date.now();
 
-  var wofIds = [];
-  readStream(msg.directory, [msg.name], function(wofIds) {
+  readStream(msg.directory, msg.name, function(wofIds) {
 
     logger.info(wofIds.length + ' ' + context.name + ' record ids loaded in ' + elapsedTime());
 
