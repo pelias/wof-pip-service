@@ -12,10 +12,9 @@ var PolygonLookup = require('polygon-lookup');
 var simplify = require('simplify-js');
 var microtime = require('microtime');
 var _ = require('lodash');
+var es = require('event-stream')
 
 var readStream = require('./readStream');
-var wofRecordStream = require('./wofRecordStream');
-
 
 var context = {
   adminLookup: null,// This worker's `PolygonLookup`.
@@ -52,24 +51,21 @@ function handleLoadMsg(msg) {
   context.name = msg.name;
   context.startTime = Date.now();
 
-  var wofRecords = {};
-  readStream(msg.directory, [msg.name], wofRecords, function() {
+  var wofIds = [];
+  readStream(msg.directory, [msg.name], function(wofIds) {
 
-    var totalCount = Object.keys(wofRecords).length;
-    logger.info(totalCount + ' ' + context.name + ' record ids loaded in ' + elapsedTime());
+    logger.info(wofIds.length + ' ' + context.name + ' record ids loaded in ' + elapsedTime());
 
     var count = 0;
 
     // a stream of WOF records
-    wofRecordStream.createWofRecordsStream(wofRecords)
-      .pipe(sink.obj(function (data) {
+    es.readArray(wofIds).pipe(sink.obj(function (id) {
 
-        count++;
-        if (count % 10000 === 0) {
-          logger.verbose('Layer:', context.name, 'Count:', count, 'Percentage:', count/totalCount*100);
+        if (++count % 10000 === 0) {
+          logger.verbose('Layer:', context.name, 'Count:', count, 'Percentage:', count/wofIds.length*100);
         }
 
-        addFeature(data.id.toString(), msg.directory);
+        addFeature(id.toString(), msg.directory);
       }))
       .on('finish', function () {
 
