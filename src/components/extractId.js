@@ -1,8 +1,8 @@
-var through2 = require('through2');
+var map = require('through2-map');
 
 module.exports.create = function() {
   // this method just returns the id property of an object
-  return through2.obj(function(o, enc, callback) {
-    callback(null, o.id.toString());
+  return map.obj(function(o, enc, callback) {
+    return o.id.toString();
   });
 }
