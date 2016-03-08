@@ -42,10 +42,12 @@ module.exports.create = function createPIPService(layers, callback) {
 
   var directory = peliasConfig.imports.whosonfirst.datapath;
 
-  if (directory.slice(-1) !== '/') {
+  if (!_.endsWith(directory, '/')) {
     directory = directory + '/';
   }
 
+  // if no layers were supplied, then use default layers and the only parameter
+  //  is the callback
   if (!(layers instanceof Array) && typeof layers === 'function') {
     callback = layers;
     layers = defaultLayers;
