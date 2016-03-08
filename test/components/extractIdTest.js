@@ -15,7 +15,7 @@ tape('extractId tests', function(test) {
       name: 'Name'
     };
 
-    var expected = 17;
+    var expected = '17';
 
     var extractId = require('../../src/components/extractId').create();
 
