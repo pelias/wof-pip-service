@@ -11,7 +11,8 @@ function test_stream(input, testedStream, callback) {
 tape('extractFields tests', function(test) {
   test.test('non-special case record', function(t) {
     var input = {
-      properties: {}
+      properties: {},
+      geometry: 'Geometry'
     };
     input.properties['wof:id'] = 17;
     input.properties['wof:name'] = 'Feature name';
@@ -25,7 +26,7 @@ tape('extractFields tests', function(test) {
         Placetype: 'Feature placetype',
         Hierarchy: 'Feature hierarchy',
       },
-      geometry: undefined
+      geometry: 'Geometry'
     };
 
     var extractFields = require('../../src/components/extractFields').create();
@@ -145,104 +146,6 @@ tape('extractFields tests', function(test) {
         Hierarchy: 'Feature hierarchy',
       },
       geometry: undefined
-    };
-
-    var extractFields = require('../../src/components/extractFields').create();
-
-    test_stream([input], extractFields, function(err, actual) {
-      t.deepEqual(actual, [expected], 'should be equal');
-      t.end();
-    });
-
-  });
-
-  test.test('Polygon geometry type should simplify first coordinates', function(t) {
-    var input = {
-      properties: {}
-    };
-    input.properties['wof:id'] = 17;
-    input.properties['wof:name'] = 'Feature name';
-    input.properties['wof:placetype'] = 'Feature placetype';
-    input.properties['wof:hierarchy'] = 'Feature hierarchy';
-    input.geometry = {
-      type: 'Polygon',
-      coordinates: [
-        [
-          [-76.42953199999999,40.23899],
-          [-76.429484,40.238996]
-        ]
-      ]
-    };
-
-    var expected = {
-      properties: {
-        Id: 17,
-        Name: 'Feature name',
-        Placetype: 'Feature placetype',
-        Hierarchy: 'Feature hierarchy',
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-76.429532, 40.23899],
-            [-76.429484, 40.238996]
-          ]
-        ]
-      }
-    };
-
-    var extractFields = require('../../src/components/extractFields').create();
-
-    test_stream([input], extractFields, function(err, actual) {
-      t.deepEqual(actual, [expected], 'should be equal');
-      t.end();
-    });
-
-  });
-
-  test.test('MultiPolygon geometry type should simplify all coordinates', function(t) {
-    var input = {
-      properties: {}
-    };
-    input.properties['wof:id'] = 17;
-    input.properties['wof:name'] = 'Feature name';
-    input.properties['wof:placetype'] = 'Feature placetype';
-    input.properties['wof:hierarchy'] = 'Feature hierarchy';
-    input.geometry = {
-      type: 'Polygon',
-      coordinates: [
-        [
-          [-76.42953199999999,40.23899],
-          [-76.429484,40.238996]
-        ],
-        [
-          [-76.40843700000001,40.241821],
-          [-76.407544,40.241928]
-        ]
-      ]
-    };
-
-    var expected = {
-      properties: {
-        Id: 17,
-        Name: 'Feature name',
-        Placetype: 'Feature placetype',
-        Hierarchy: 'Feature hierarchy',
-      },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-76.429532, 40.23899],
-            [-76.429484, 40.238996]
-          ],
-          [
-            [-76.408437,40.241821],
-            [-76.407544,40.241928]
-          ]
-        ]
-      }
     };
 
     var extractFields = require('../../src/components/extractFields').create();
