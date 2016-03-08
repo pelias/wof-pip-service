@@ -3,11 +3,11 @@ var simplify = require('simplify-js');
 var _ = require('lodash');
 
 module.exports.create = function() {
-  // this function extracts the id, name, placetype, hierarchy, and geometry
-  return map.obj(function(wofData) {
-    wofData.geometry = simplifyGeometry(wofData.geometry);
+  // this function just simplifies the geometry
+  return map.obj(function(feature) {
+    feature.geometry = simplifyGeometry(feature.geometry);
 
-    return wofData;
+    return feature;
 
   });
 }
