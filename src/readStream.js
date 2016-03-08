@@ -1,26 +1,36 @@
 var parse = require('csv-parse');
 var fs = require('fs');
 var sink = require('through2-sink');
+var extractId = require('./components/extractId');
+var isValidId = require('./components/isValidId');
+var loadJSON = require('./components/loadJSON');
+var extractFields = require('./components/extractFields');
+var simplifyGeometry = require('./components/simplifyGeometry');
 
 /*
   This function finds all the `latest` files in `meta/`, CSV parses them,
   pushes the ids onto an array and calls the callback
 */
-function readData(directory, type, callback) {
-  var wofIds = [];
+function readData(directory, layer, callback) {
+  var features = [];
 
   var options = {
     delimiter: ',',
     columns: true
   };
 
-  fs.createReadStream(directory + 'meta/wof-' + type + '-latest.csv')
+  fs.createReadStream(directory + 'meta/wof-' + layer + '-latest.csv')
     .pipe(parse(options))
-    .pipe(sink.obj(function(data) {
-      wofIds.push(data.id);
+    .pipe(extractId.create())
+    .pipe(isValidId.create())
+    .pipe(loadJSON.create(directory))
+    .pipe(extractFields.create())
+    .pipe(simplifyGeometry.create())
+    .pipe(sink.obj(function(feature) {
+      features.push(feature);
     }))
     .on('finish', function() {
-      callback(wofIds);
+      callback(features);
     });
 
 }

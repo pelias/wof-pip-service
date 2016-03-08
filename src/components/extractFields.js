@@ -1,5 +1,4 @@
 var map = require('through2-map');
-var simplify = require('simplify-js');
 var _ = require('lodash');
 
 module.exports.create = function() {
