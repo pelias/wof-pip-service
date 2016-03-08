@@ -3,7 +3,7 @@ var map = require('through2-map');
 var fs = require('fs');
 
 module.exports.create = function(datapath) {
-  // parse and return JSON contents with Id property appended
+  // parse and return JSON contents
   return map.obj(function(id, enc, callback) {
     // id 123456789 -> data/123/456/789/123456789.geojson
     var filename = [
@@ -15,10 +15,7 @@ module.exports.create = function(datapath) {
       id + '.geojson']
     .join(path.sep);
 
-    var contents = JSON.parse(fs.readFileSync(filename));
-    contents.Id = id.toString();
-
-    return contents;
+    return JSON.parse(fs.readFileSync(filename));
 
   });
 }

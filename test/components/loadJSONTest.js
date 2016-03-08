@@ -12,7 +12,7 @@ function test_stream(input, testedStream, callback) {
 }
 
 tape('loadJSON tests', function(test) {
-  test.test('json should be loaded from file with Id property appended', function(t) {
+  test.test('json should be loaded from file', function(t) {
     var input = '123456789';
 
     // create a directory to hold the temporary file
@@ -30,11 +30,7 @@ tape('loadJSON tests', function(test) {
       // cleanup the tmp directory
       fs.removeSync(tmpDirectory[0]);
 
-      // the expected should also contain an 'Id' field
-      var expected = _.clone(fileContents);
-      expected.Id = '123456789';
-
-      t.deepEqual(actual, [expected], 'should be equal');
+      t.deepEqual(actual, [fileContents], 'should be equal');
       t.end();
     });
 
