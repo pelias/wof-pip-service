@@ -1,42 +1,37 @@
 var parse = require('csv-parse');
 var fs = require('fs');
-var batch = require('batchflow');
 var sink = require('through2-sink');
-
-var readStreamComponents = require('./readStreamComponents');
+var extractId = require('./components/extractId');
+var isValidId = require('./components/isValidId');
+var loadJSON = require('./components/loadJSON');
+var extractFields = require('./components/extractFields');
+var simplifyGeometry = require('./components/simplifyGeometry');
 
 /*
   This function finds all the `latest` files in `meta/`, CSV parses them,
-  extracts the required fields, and assigns to a big collection
+  pushes the ids onto an array and calls the callback
 */
-function readData(directory, types, wofRecords, callback) {
-  batch(types).parallel(2).each(function(idx, type, done) {
-    var csv_parser = parse({ delimiter: ',', columns: true });
-    var is_valid_data_file_path = readStreamComponents.is_valid_data_file_path();
-    var normalize_file_path = readStreamComponents.normalize_file_path();
-    var file_is_readable = readStreamComponents.file_is_readable(directory + 'data/');
-    var json_parse_stream = readStreamComponents.json_parse_stream(directory + 'data/');
-    var filter_incomplete_files_stream = readStreamComponents.filter_incomplete_files_stream();
-    var map_fields_stream = readStreamComponents.map_fields_stream();
+function readData(directory, layer, callback) {
+  var features = [];
 
-    fs.createReadStream(directory + 'meta/wof-' + type + '-latest.csv')
-    .pipe(csv_parser)
-    .pipe(is_valid_data_file_path)
-    .pipe(normalize_file_path)
-    .pipe(file_is_readable)
-    .pipe(json_parse_stream)
-    .pipe(filter_incomplete_files_stream)
-    .pipe(map_fields_stream)
-    .pipe(sink.obj(function(wofRecord) {
-      wofRecords[wofRecord.id] = wofRecord;
+  var options = {
+    delimiter: ',',
+    columns: true
+  };
+
+  fs.createReadStream(directory + 'meta/wof-' + layer + '-latest.csv')
+    .pipe(parse(options))
+    .pipe(extractId.create())
+    .pipe(isValidId.create())
+    .pipe(loadJSON.create(directory))
+    .pipe(extractFields.create())
+    .pipe(simplifyGeometry.create())
+    .pipe(sink.obj(function(feature) {
+      features.push(feature);
     }))
-    .on('finish', done);
-
-  }).error(function(err) {
-    console.error(err);
-  }).end(function() {
-    callback();
-  });
+    .on('finish', function() {
+      callback(features);
+    });
 
 }
 
