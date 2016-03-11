@@ -71,6 +71,7 @@ module.exports.create = function createPIPService(layers, callback) {
             Object.keys(workers).forEach(function (layer) {
               workers[layer].kill();
             });
+            countryWorker.kill();
           },
           lookup: function (latitude, longitude, responseCallback, search_layers) {
             if (search_layers === undefined) {
