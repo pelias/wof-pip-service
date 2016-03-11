@@ -20,16 +20,15 @@ var workers = {};
 var responseQueue = {};
 
 var defaultLayers = module.exports.defaultLayers = [
-  //'continent',
   'country', // 216
-  // 'county', // 18166
-  // 'dependency', // 39
-  // 'disputed', // 39
-  // 'localadmin', // 106880
-  // 'locality', // 160372
+  'county', // 18166
+  'dependency', // 39
+  'disputed', // 39
+  'localadmin', // 106880
+  'locality', // 160372
   'macrocounty', // 350
   'macroregion', // 82
-  // 'neighbourhood', // 62936
+  'neighbourhood', // 62936
   'region' // 4698
 ];
 
@@ -143,7 +142,7 @@ function handleResults(msg) {
 
   if (allLayersHaveBeenCalled(responseQueue[msg.id])) {
     if (countryLayerShouldBeCalled(responseQueue[msg.id], workers)) {
-      searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
+        searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
     } else {
       responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
       delete responseQueue[msg.id];
