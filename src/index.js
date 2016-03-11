@@ -16,12 +16,13 @@ var uid = require('uid');
 var _ = require('lodash');
 
 var workers = {};
+var countryWorker;
 
 var responseQueue = {};
 
 var defaultLayers = module.exports.defaultLayers = [
   //'continent',
-  'country', // 216
+  // 'country', // 216
   'county', // 18166
   'dependency', // 39
   'disputed', // 39
@@ -53,48 +54,55 @@ module.exports.create = function createPIPService(layers, callback) {
     layers = defaultLayers;
   }
 
-  async.forEach(layers, function (layer, done) {
-      startWorker(directory, layer, function (err, worker) {
-        workers[layer] = worker;
-        done();
-      });
-    },
-    function end() {
-      logger.info('PIP Service Loading Completed!!!');
+  startWorker(directory, 'country', function(err, worker) {
+    countryWorker = worker;
 
-      callback(null, {
-        end: function end() {
-          Object.keys(workers).forEach(function (layer) {
-            workers[layer].kill();
-          });
-        },
-        lookup: function (latitude, longitude, responseCallback, search_layers) {
-          if (search_layers === undefined) {
-            search_layers = layers;
-          } else {
-            // take the intersection of the valid layers and the layers sent in
-            // so that if any layers are manually disabled for development
-            // everything still works. this also means invalid layers
-            // are silently ignored
-            search_layers = _.intersection(search_layers, layers);
+    async.forEach(layers, function (layer, done) {
+        startWorker(directory, layer, function (err, worker) {
+          workers[layer] = worker;
+          done();
+        });
+      },
+      function end() {
+        logger.info('PIP Service Loading Completed!!!');
+
+        callback(null, {
+          end: function end() {
+            Object.keys(workers).forEach(function (layer) {
+              workers[layer].kill();
+            });
+          },
+          lookup: function (latitude, longitude, responseCallback, search_layers) {
+            if (search_layers === undefined) {
+              search_layers = layers;
+            } else {
+              // take the intersection of the valid layers and the layers sent in
+              // so that if any layers are manually disabled for development
+              // everything still works. this also means invalid layers
+              // are silently ignored
+              search_layers = _.intersection(search_layers, layers);
+            }
+
+            var id = uid(10);
+
+            responseQueue[id] = {
+              results: [],
+              latLon: {latitude: latitude, longitude: longitude},
+              search_layers: search_layers,
+              resultCount: 0,
+              responseCallback: responseCallback
+            };
+
+            search_layers.forEach(function(layer) {
+              searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
+            });
           }
+        });
+      }
+    );
 
-          var id = uid(10);
+  });
 
-          responseQueue[id] = {
-            results: [],
-            search_layers: search_layers,
-            resultCount: 0,
-            responseCallback: responseCallback
-          };
-
-          search_layers.forEach(function(layer) {
-            searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
-          });
-        }
-      });
-    }
-  );
 };
 
 function startWorker(directory, layer, callback) {
@@ -128,17 +136,28 @@ function searchWorker(id, worker, coords) {
 }
 
 function handleResults(msg) {
-  //logger.info('RESULTS:', JSON.stringify(msg, null, 2));
+  // logger.info('RESULTS:', JSON.stringify(msg, null, 2));
 
   if (!_.isEmpty(msg.results) ) {
     responseQueue[msg.id].results.push(msg.results);
   }
   responseQueue[msg.id].resultCount++;
 
-  if (responseQueue[msg.id].resultCount === responseQueue[msg.id].search_layers.length) {
-    responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
-    delete responseQueue[msg.id];
+  if (responseQueue[msg.id].resultCount >= responseQueue[msg.id].search_layers.length) {
+    // check if country data got added
+    // if not, add it and figure out how to wait for its response
+    if (responseQueue[msg.id].results.length === 0 && !countryAlreadyCalled(responseQueue[msg.id])) {
+      searchWorker(msg.id, countryWorker, responseQueue[msg.id].latLon);
+    } else {
+      responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
+      delete responseQueue[msg.id];
+    }
+
   }
+}
+
+function countryAlreadyCalled(q) {
+  return q.resultCount === q.search_layers.length+1;
 }
 
 function hasDataDirectory() {
