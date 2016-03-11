@@ -62,12 +62,7 @@ module.exports.create = function createPIPService(layers, callback) {
       logger.info('PIP Service Loading Completed!!!');
 
       callback(null, {
-        end: function end() {
-          Object.keys(workers).forEach(function (layer) {
-            workers[layer].kill();
-          });
-          countryWorker.kill();
-        },
+        end: killAllWorkers,
         lookup: function (latitude, longitude, responseCallback, search_layers) {
           if (search_layers === undefined) {
             search_layers = layers;
@@ -101,6 +96,13 @@ module.exports.create = function createPIPService(layers, callback) {
   );
 
 };
+
+function killAllWorkers() {
+  Object.keys(workers).forEach(function (layer) {
+    workers[layer].kill();
+  });
+
+}
 
 function startWorker(directory, layer, callback) {
 
