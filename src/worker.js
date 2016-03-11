@@ -37,6 +37,7 @@ function elapsedTime() {
 
 function handleLoadMsg(msg) {
   context.name = msg.name;
+  process.title = context.name;
   context.startTime = Date.now();
 
   readStream(msg.directory, msg.name, function(features) {
