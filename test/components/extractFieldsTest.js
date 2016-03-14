@@ -18,15 +18,13 @@ tape('extractFields tests', function(test) {
     input.properties['wof:name'] = 'Feature name';
     input.properties['wof:placetype'] = 'Feature placetype';
     input.properties['wof:hierarchy'] = 'Feature hierarchy';
-    input.properties['iso:country'] = 'Feature ISO';
 
     var expected = {
       properties: {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'Feature placetype',
-        Hierarchy: 'Feature hierarchy',
-        ISO: 'Feature ISO'
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: 'Geometry'
     };
@@ -56,8 +54,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'a2_alt value',
         Placetype: 'county',
-        Hierarchy: 'Feature hierarchy',
-        ISO: 'US'
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };
@@ -80,7 +77,6 @@ tape('extractFields tests', function(test) {
     input.properties['iso:country'] = 'non-US';
     input.properties['wof:placetype'] = 'county';
     input.properties['wof:hierarchy'] = 'Feature hierarchy';
-    input.properties['iso:country'] = 'Feature ISO';
     input.properties['qs:a2_alt'] = 'a2_alt value';
 
     var expected = {
@@ -88,8 +84,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'county',
-        Hierarchy: 'Feature hierarchy',
-        ISO: 'Feature ISO'
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };
@@ -112,7 +107,6 @@ tape('extractFields tests', function(test) {
     input.properties['iso:country'] = 'US';
     input.properties['wof:placetype'] = 'non-county';
     input.properties['wof:hierarchy'] = 'Feature hierarchy';
-    input.properties['iso:country'] = 'Feature ISO';
     input.properties['qs:a2_alt'] = 'a2_alt value';
 
     var expected = {
@@ -120,8 +114,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'non-county',
-        Hierarchy: 'Feature hierarchy',
-        ISO: 'Feature ISO'
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };
@@ -150,8 +143,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'county',
-        Hierarchy: 'Feature hierarchy',
-        ISO: 'US'
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };

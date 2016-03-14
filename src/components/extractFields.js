@@ -9,8 +9,7 @@ module.exports.create = function() {
         Id: wofData.properties['wof:id'],
         Name: getName(wofData),
         Placetype: wofData.properties['wof:placetype'],
-        Hierarchy: wofData.properties['wof:hierarchy'],
-        ISO: wofData.properties['iso:country']
+        Hierarchy: wofData.properties['wof:hierarchy']
       },
       geometry: wofData.geometry
     };
