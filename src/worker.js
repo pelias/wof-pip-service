@@ -14,8 +14,7 @@ var context = {
   layer: '', // The name of this layer (eg, 'country', 'neighborhood').
   featureCollection: {
     features: []
-  },
-  byId: {} // this is only used by the `country` layer
+  }
 };
 
 /**
@@ -47,15 +46,12 @@ function handleLoadMsg(msg) {
     context.featureCollection.features = features;
     context.adminLookup = new PolygonLookup( context.featureCollection );
 
+    // load countries up into an object keyed on id
     if ('country' === context.layer) {
-      logger.info('going to load countries by id');
-
-      features.forEach(function(feature) {
-        context.byId[feature.properties.Id] = feature.properties;
-      });
-
-      logger.info('loaded ' + Object.keys(context.byId).length + ' countries');
-
+      context.byId = features.reduce(function(cumulative, feature) {
+        cumulative[feature.properties.Id] = feature.properties;
+        return cumulative;
+      }, {});
     }
 
     logger.info( 'Done loading ' + context.layer );
@@ -95,6 +91,9 @@ function handleLookupById(msg) {
 }
 
 // return a country layer or an empty object (country not found)
+// only process if this is the country worker
 function lookupById(id) {
-  return context.byId[id] || {};
+  if ('country' === context.layer) {
+    return context.byId[id] || {};
+  }
 }
