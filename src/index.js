@@ -53,7 +53,7 @@ module.exports.create = function createPIPService(layers, callback) {
     layers = defaultLayers;
   }
 
-  // load all workers, including country
+  // load all workers, including country, which is a special case
   async.forEach(layers.concat('country'), function (layer, done) {
       startWorker(directory, layer, function (err, worker) {
         workers[layer] = worker;
