@@ -15,12 +15,13 @@ var async = require('async');
 var uid = require('uid');
 var _ = require('lodash');
 
+// worker processes keyed on layer
 var workers = {};
 
 var responseQueue = {};
 
+// don't include `country` here, it makes the bookkeeping more difficult later
 var defaultLayers = module.exports.defaultLayers = [
-  'country', // 216
   'county', // 18166
   'dependency', // 39
   'disputed', // 39
@@ -52,7 +53,8 @@ module.exports.create = function createPIPService(layers, callback) {
     layers = defaultLayers;
   }
 
-  async.forEach(layers, function (layer, done) {
+  // load all workers, including country
+  async.forEach(layers.concat('country'), function (layer, done) {
       startWorker(directory, layer, function (err, worker) {
         workers[layer] = worker;
         done();
@@ -74,25 +76,23 @@ module.exports.create = function createPIPService(layers, callback) {
             search_layers = _.intersection(search_layers, layers);
           }
 
-          // exclude country layer initially since it performs poorly
-          var non_country_search_layers = _.filter(search_layers, function(layer) {
-            return layer !== 'country';
-          });
-
           var id = uid(10);
 
+          // bookkeeping object that tracks the progress of the request
           responseQueue[id] = {
             results: [],
             latLon: {latitude: latitude, longitude: longitude},
-            search_layers: non_country_search_layers,
+            search_layers: search_layers,
             numberOfLayersCalled: 0,
             responseCallback: responseCallback,
+            countryLayerHasBeenCalled: false,
             lookupCountryByIdHasBeenCalled: false
           };
 
-          non_country_search_layers.forEach(function(layer) {
+          search_layers.forEach(function(layer) {
             searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
           });
+
         }
       });
     }
@@ -153,25 +153,33 @@ function handleResults(msg) {
   }
   responseQueue[msg.id].numberOfLayersCalled++;
 
-  if (allLayersHaveBeenCalled(responseQueue[msg.id])) {
-    if (countryLayerShouldBeCalled(responseQueue[msg.id], workers)) {
-        searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
+  // early exit if we're still waiting on layers to return
+  if (!allLayersHaveBeenCalled(responseQueue[msg.id])) {
+    return;
+  }
 
-    } else if (lookupCountryByIdShouldBeCalled(responseQueue[msg.id])) {
-        // mark that lookupCountryById has already been called so it's not
-        //  called again if it returns nothing
-        responseQueue[msg.id].lookupCountryByIdHasBeenCalled = true;
+  // all layers have been called, so process the results, potentially calling
+  //  the country layer or looking up country by id
+  if (countryLayerShouldBeCalled(responseQueue[msg.id], workers)) {
+      // mark that countryLayerHasBeenCalled so it's not called again
+      responseQueue[msg.id].countryLayerHasBeenCalled = true;
 
-        lookupCountryById(msg.id, getId(responseQueue[msg.id].results));
+      searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
 
-    } else {
-      // all info has been gathered, so return
-      responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
-      delete responseQueue[msg.id];
+  } else if (lookupCountryByIdShouldBeCalled(responseQueue[msg.id])) {
+      // mark that lookupCountryById has already been called so it's not
+      //  called again if it returns nothing
+      responseQueue[msg.id].lookupCountryByIdHasBeenCalled = true;
 
-    }
+      lookupCountryById(msg.id, getId(responseQueue[msg.id].results));
+
+  } else {
+    // all info has been gathered, so return
+    responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
+    delete responseQueue[msg.id];
 
   }
+
 }
 
 // helper function that gets the id of the first result with a hierarchy country id
@@ -229,7 +237,7 @@ function lookupCountryByIdShouldBeCalled(q) {
 }
 
 // helper to determine if all requested layers have been called
-// need to check `>=` since country is initially excluded but counted when called
+// need to check `>=` since country is initially excluded but counted when the worker returns
 function allLayersHaveBeenCalled(q) {
   return q.numberOfLayersCalled >= q.search_layers.length;
 }
@@ -239,19 +247,9 @@ function allLayersHaveBeenCalled(q) {
 // 2. country layer has not already been called
 // 3. there is a country layer available (don't crash if it hasn't been loaded)
 function countryLayerShouldBeCalled(q, workers) {
-  return noNonCountryLayersReturned(q) &&
-          !countryAlreadyCalled(q) &&
+  return q.results.length === 0 && // no non-country layers returned anything
+          !q.countryLayerHasBeenCalled &&
           workers.hasOwnProperty('country');
-}
-
-// helper to determine if any non-country layers returned results
-function noNonCountryLayersReturned(q) {
-  return q.results.length === 0;
-}
-
-// helper to determine if country layer has already been called
-function countryAlreadyCalled(q) {
-  return q.numberOfLayersCalled === q.search_layers.length+1;
 }
 
 function hasDataDirectory() {
