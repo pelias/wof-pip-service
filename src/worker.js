@@ -11,12 +11,11 @@ var readStream = require('./readStream');
 
 var context = {
   adminLookup: null,// This worker's `PolygonLookup`.
-  name: '', // The name of this layer (eg, 'country', 'neighborhood').
+  layer: '', // The name of this layer (eg, 'country', 'neighborhood').
   featureCollection: {
     features: []
   }
 };
-
 
 /**
  * Respond to messages from the parent process
@@ -25,6 +24,7 @@ function messageHandler( msg ) {
   switch (msg.type) {
     case 'load'   : return handleLoadMsg(msg);
     case 'search' : return handleSearch(msg);
+    case 'lookupById': return handleLookupById(msg);
     default       : logger.error('Unknown message:', msg);
   }
 }
@@ -36,21 +36,29 @@ function elapsedTime() {
 }
 
 function handleLoadMsg(msg) {
-  context.name = msg.name;
-  process.title = context.name;
+  context.layer = msg.layer;
+  process.title = context.layer;
   context.startTime = Date.now();
 
-  readStream(msg.directory, msg.name, function(features) {
-    logger.info(features.length + ' ' + context.name + ' record ids loaded in ' + elapsedTime());
-    logger.info(context.name + ' finished building FeatureCollection in ' + elapsedTime());
+  readStream(msg.directory, msg.layer, function(features) {
+    logger.info(features.length + ' ' + context.layer + ' record ids loaded in ' + elapsedTime());
+    logger.info(context.layer + ' finished building FeatureCollection in ' + elapsedTime());
 
     context.featureCollection.features = features;
     context.adminLookup = new PolygonLookup( context.featureCollection );
 
-    logger.info( 'Done loading ' + context.name );
-    logger.info(context.name + ' finished loading ' + features.length + ' features in ' + elapsedTime());
+    // load countries up into an object keyed on id
+    if ('country' === context.layer) {
+      context.byId = features.reduce(function(cumulative, feature) {
+        cumulative[feature.properties.Id] = feature.properties;
+        return cumulative;
+      }, {});
+    }
 
-    process.send( {type: 'loaded', name: context.name} );
+    logger.info( 'Done loading ' + context.layer );
+    logger.info(context.layer + ' finished loading ' + features.length + ' features in ' + elapsedTime());
+
+    process.send( {type: 'loaded', layer: context.layer} );
 
   });
 
@@ -58,7 +66,7 @@ function handleLoadMsg(msg) {
 
 function handleSearch(msg) {
   process.send({
-    name: context.name,
+    layer: context.layer,
     type: 'results',
     id: msg.id,
     results: search( msg.coords )
@@ -72,4 +80,21 @@ function search( latLon ){
   var poly = context.adminLookup.search( latLon.longitude, latLon.latitude );
 
   return (poly === undefined) ? {} : poly.properties;
+}
+
+function handleLookupById(msg) {
+  process.send({
+    layer: context.layer,
+    type: 'results',
+    id: msg.id,
+    results: lookupById(msg.countryId)
+  });
+}
+
+// return a country layer or an empty object (country not found)
+// only process if this is the country worker
+function lookupById(id) {
+  if ('country' === context.layer) {
+    return context.byId[id] || {};
+  }
 }

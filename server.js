@@ -11,9 +11,10 @@ createPIPService(function (err, pipService) {
       res.json(results);
     });
 
-    app.listen(port, function () {
-      logger.info('PIP service listening on port ', port);
-    });
-
   });
+
+  app.listen(port, function () {
+    logger.info('PIP service listening on port ', port);
+  });
+
 });

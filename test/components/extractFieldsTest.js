@@ -24,7 +24,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'Feature placetype',
-        Hierarchy: 'Feature hierarchy',
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: 'Geometry'
     };
@@ -54,7 +54,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'a2_alt value',
         Placetype: 'county',
-        Hierarchy: 'Feature hierarchy',
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };
@@ -84,7 +84,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'county',
-        Hierarchy: 'Feature hierarchy',
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };
@@ -114,7 +114,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'non-county',
-        Hierarchy: 'Feature hierarchy',
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };
@@ -143,7 +143,7 @@ tape('extractFields tests', function(test) {
         Id: 17,
         Name: 'Feature name',
         Placetype: 'county',
-        Hierarchy: 'Feature hierarchy',
+        Hierarchy: 'Feature hierarchy'
       },
       geometry: undefined
     };

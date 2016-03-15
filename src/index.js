@@ -15,13 +15,13 @@ var async = require('async');
 var uid = require('uid');
 var _ = require('lodash');
 
+// worker processes keyed on layer
 var workers = {};
 
 var responseQueue = {};
 
+// don't include `country` here, it makes the bookkeeping more difficult later
 var defaultLayers = module.exports.defaultLayers = [
-  //'continent',
-  'country', // 216
   'county', // 18166
   'dependency', // 39
   'disputed', // 39
@@ -53,7 +53,8 @@ module.exports.create = function createPIPService(layers, callback) {
     layers = defaultLayers;
   }
 
-  async.forEach(layers, function (layer, done) {
+  // load all workers, including country, which is a special case
+  async.forEach(layers.concat('country'), function (layer, done) {
       startWorker(directory, layer, function (err, worker) {
         workers[layer] = worker;
         done();
@@ -63,11 +64,7 @@ module.exports.create = function createPIPService(layers, callback) {
       logger.info('PIP Service Loading Completed!!!');
 
       callback(null, {
-        end: function end() {
-          Object.keys(workers).forEach(function (layer) {
-            workers[layer].kill();
-          });
-        },
+        end: killAllWorkers,
         lookup: function (latitude, longitude, responseCallback, search_layers) {
           if (search_layers === undefined) {
             search_layers = layers;
@@ -81,21 +78,34 @@ module.exports.create = function createPIPService(layers, callback) {
 
           var id = uid(10);
 
+          // bookkeeping object that tracks the progress of the request
           responseQueue[id] = {
             results: [],
+            latLon: {latitude: latitude, longitude: longitude},
             search_layers: search_layers,
-            resultCount: 0,
-            responseCallback: responseCallback
+            numberOfLayersCalled: 0,
+            responseCallback: responseCallback,
+            countryLayerHasBeenCalled: false,
+            lookupCountryByIdHasBeenCalled: false
           };
 
           search_layers.forEach(function(layer) {
             searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
           });
+
         }
       });
     }
   );
+
 };
+
+function killAllWorkers() {
+  Object.keys(workers).forEach(function (layer) {
+    workers[layer].kill();
+  });
+
+}
 
 function startWorker(directory, layer, callback) {
 
@@ -103,7 +113,7 @@ function startWorker(directory, layer, callback) {
 
   worker.on('message', function (msg) {
     if (msg.type === 'loaded') {
-      logger.info(msg, 'Worker ' + msg.name + ' just told me it loaded!');
+      logger.info(msg, 'Worker ' + msg.layer + ' just told me it loaded!');
       callback(null, worker);
     }
 
@@ -114,7 +124,7 @@ function startWorker(directory, layer, callback) {
 
   worker.send({
     type: 'load',
-    name: layer,
+    layer: layer,
     directory: directory
   });
 }
@@ -127,18 +137,119 @@ function searchWorker(id, worker, coords) {
   })
 }
 
+function lookupCountryById(id, countryId) {
+  workers.country.send({
+    type: 'lookupById',
+    id: id,
+    countryId: countryId
+  });
+}
+
 function handleResults(msg) {
-  //logger.info('RESULTS:', JSON.stringify(msg, null, 2));
+  // logger.info('RESULTS:', JSON.stringify(msg, null, 2));
 
   if (!_.isEmpty(msg.results) ) {
     responseQueue[msg.id].results.push(msg.results);
   }
-  responseQueue[msg.id].resultCount++;
+  responseQueue[msg.id].numberOfLayersCalled++;
 
-  if (responseQueue[msg.id].resultCount === responseQueue[msg.id].search_layers.length) {
+  // early exit if we're still waiting on layers to return
+  if (!allLayersHaveBeenCalled(responseQueue[msg.id])) {
+    return;
+  }
+
+  // all layers have been called, so process the results, potentially calling
+  //  the country layer or looking up country by id
+  if (countryLayerShouldBeCalled(responseQueue[msg.id], workers)) {
+      // mark that countryLayerHasBeenCalled so it's not called again
+      responseQueue[msg.id].countryLayerHasBeenCalled = true;
+
+      searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
+
+  } else if (lookupCountryByIdShouldBeCalled(responseQueue[msg.id])) {
+      // mark that lookupCountryById has already been called so it's not
+      //  called again if it returns nothing
+      responseQueue[msg.id].lookupCountryByIdHasBeenCalled = true;
+
+      lookupCountryById(msg.id, getId(responseQueue[msg.id].results));
+
+  } else {
+    // all info has been gathered, so return
     responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
     delete responseQueue[msg.id];
+
   }
+
+}
+
+// helper function that gets the id of the first result with a hierarchy country id
+// caveat:  this will produce inconsistent behavior if results have different
+//  hierarchy country id values (which shouldn't happen, otherwise it's bad data)
+//
+// it's safe to assume that at least one result has a hierarchy country id value
+//  since the call to `lookupCountryByIdShouldBeCalled` has already confirmed it
+//  and this function is called in combination
+function getId(results) {
+  for (var i = 0; i < results.length; i++) {
+    for (var j = 0; j < results[i].Hierarchy.length; j++) {
+      if (results[i].Hierarchy[j].hasOwnProperty('country_id')) {
+        return results[i].Hierarchy[j].country_id;
+      }
+    }
+  }
+
+}
+
+// helper function to determine if country should be looked up by id
+// returns `false` if:
+// 1.  there are no results (lat/lon is in the middle of an ocean)
+// 2.  no result has a hierarchy country id (shouldn't happen but guard against bad data)
+// 3.  lookupCountryByIdHasBeenCalled has already been called
+// 4.  there is already a result with a `country` Placetype
+//
+// in the general case, this function should return true because the country
+// polygon lookup is normally skipped for performance reasons but country needs
+// to be looked up anyway
+function lookupCountryByIdShouldBeCalled(q) {
+  // helper that returns true if at least one Hierarchy of a result has a `country_id` property
+  var hasCountryId = function(result) {
+    return result.Hierarchy.length > 0 &&
+            _.some(result.Hierarchy, function(h) { return h.hasOwnProperty('country_id')});
+  }
+
+  var isCountryPlacetype = function(result) {
+    return result.Placetype === 'country';
+  }
+
+  // don't call if no (or any) result has a country id
+  if (q.results.length === 0 || !_.some(q.results, hasCountryId)) {
+    return false;
+  }
+
+  // don't call lookupCountryById if it's already been called
+  if (q.lookupCountryByIdHasBeenCalled) {
+    return false;
+  }
+
+  // return true if there are no results with 'country' Placetype
+  return !_.some(q.results, isCountryPlacetype);
+
+}
+
+// helper to determine if all requested layers have been called
+// need to check `>=` since country is initially excluded but counted when the worker returns
+function allLayersHaveBeenCalled(q) {
+  return q.numberOfLayersCalled >= q.search_layers.length;
+}
+
+// country layer should be called when the following 3 conditions have been met
+// 1. no other layers returned anything (when a point falls under no subcountry polygons)
+// 2. country layer has not already been called
+// 3. there is a country layer available (don't crash if it hasn't been loaded)
+function countryLayerShouldBeCalled(q, workers) {
+  return q.results.length === 0 && // no non-country layers returned anything
+          !q.countryLayerHasBeenCalled &&
+          workers.hasOwnProperty('country');
 }
 
 function hasDataDirectory() {
