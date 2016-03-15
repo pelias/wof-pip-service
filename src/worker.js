@@ -37,6 +37,7 @@ function elapsedTime() {
 
 function handleLoadMsg(msg) {
   context.layer = msg.layer;
+  process.title = context.layer;
   context.startTime = Date.now();
 
   readStream(msg.directory, msg.layer, function(features) {
