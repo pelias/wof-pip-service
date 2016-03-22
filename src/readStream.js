@@ -6,6 +6,7 @@ var isValidId = require('./components/isValidId');
 var loadJSON = require('./components/loadJSON');
 var extractFields = require('./components/extractFields');
 var simplifyGeometry = require('./components/simplifyGeometry');
+var filterOutDeprecatedRecords = require('./components/filterOutDeprecatedRecords');
 
 /*
   This function finds all the `latest` files in `meta/`, CSV parses them,
@@ -24,6 +25,7 @@ function readData(directory, layer, callback) {
     .pipe(extractId.create())
     .pipe(isValidId.create())
     .pipe(loadJSON.create(directory))
+    .pipe(filterOutDeprecatedRecords.create())
     .pipe(extractFields.create())
     .pipe(simplifyGeometry.create())
     .pipe(sink.obj(function(feature) {
