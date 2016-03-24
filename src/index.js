@@ -34,7 +34,6 @@ var defaultLayers = module.exports.defaultLayers = [
 ];
 
 module.exports.create = function createPIPService(layers, callback) {
-
   if (!hasDataDirectory()) {
     logger.error('Could not find whosonfirst data directory in configuration');
     process.exit( 2 );
@@ -92,23 +91,19 @@ module.exports.create = function createPIPService(layers, callback) {
           search_layers.forEach(function(layer) {
             searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
           });
-
         }
       });
     }
   );
-
 };
 
 function killAllWorkers() {
   Object.keys(workers).forEach(function (layer) {
     workers[layer].kill();
   });
-
 }
 
 function startWorker(directory, layer, callback) {
-
   var worker = childProcess.fork(path.join(__dirname, 'worker'));
 
   worker.on('message', function (msg) {
@@ -165,21 +160,17 @@ function handleResults(msg) {
       responseQueue[msg.id].countryLayerHasBeenCalled = true;
 
       searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
-
   } else if (lookupCountryByIdShouldBeCalled(responseQueue[msg.id])) {
       // mark that lookupCountryById has already been called so it's not
       //  called again if it returns nothing
       responseQueue[msg.id].lookupCountryByIdHasBeenCalled = true;
 
       lookupCountryById(msg.id, getId(responseQueue[msg.id].results));
-
   } else {
     // all info has been gathered, so return
     responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
     delete responseQueue[msg.id];
-
   }
-
 }
 
 // helper function that gets the id of the first result with a hierarchy country id
@@ -197,7 +188,6 @@ function getId(results) {
       }
     }
   }
-
 }
 
 // helper function to determine if country should be looked up by id
@@ -233,7 +223,6 @@ function lookupCountryByIdShouldBeCalled(q) {
 
   // return true if there are no results with 'country' Placetype
   return !_.some(q.results, isCountryPlacetype);
-
 }
 
 // helper to determine if all requested layers have been called
