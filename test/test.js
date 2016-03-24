@@ -1,6 +1,7 @@
-require ('./test/extractFieldsTest.js');
-require ('./test/extractIdTest.js');
-require ('./test/isValidIdTest.js');
-require ('./test/loadJSONTest.js');
-require ('./test/simplifyGeometryTest.js');
-require ('./test/filterOutDeprecatedRecords.js');
+require ('./components/extractFieldsTest.js');
+require ('./components/extractIdTest.js');
+require ('./components/isValidIdTest.js');
+require ('./components/loadJSONTest.js');
+require ('./components/simplifyGeometryTest.js');
+require ('./components/filterOutDeprecatedRecordsTest.js');
+require ('./components/filterOutNamelessRecordsTest.js');
