@@ -34,7 +34,6 @@ var defaultLayers = module.exports.defaultLayers = [
 ];
 
 module.exports.create = function createPIPService(layers, callback) {
-
   if (!hasDataDirectory()) {
     logger.error('Could not find whosonfirst data directory in configuration');
     process.exit( 2 );
@@ -68,6 +67,10 @@ module.exports.create = function createPIPService(layers, callback) {
         lookup: function (latitude, longitude, responseCallback, search_layers) {
           if (search_layers === undefined) {
             search_layers = layers;
+          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers['country']) {
+            // in the case where only the country layer is to be searched
+            // (and the country layer is loaded), keep search_layers unmodified
+            // so that the country layer is queried directly
           } else {
             // take the intersection of the valid layers and the layers sent in
             // so that if any layers are manually disabled for development
@@ -92,23 +95,19 @@ module.exports.create = function createPIPService(layers, callback) {
           search_layers.forEach(function(layer) {
             searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
           });
-
         }
       });
     }
   );
-
 };
 
 function killAllWorkers() {
   Object.keys(workers).forEach(function (layer) {
     workers[layer].kill();
   });
-
 }
 
 function startWorker(directory, layer, callback) {
-
   var worker = childProcess.fork(path.join(__dirname, 'worker'));
 
   worker.on('message', function (msg) {
@@ -165,21 +164,17 @@ function handleResults(msg) {
       responseQueue[msg.id].countryLayerHasBeenCalled = true;
 
       searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
-
   } else if (lookupCountryByIdShouldBeCalled(responseQueue[msg.id])) {
       // mark that lookupCountryById has already been called so it's not
       //  called again if it returns nothing
       responseQueue[msg.id].lookupCountryByIdHasBeenCalled = true;
 
       lookupCountryById(msg.id, getId(responseQueue[msg.id].results));
-
   } else {
     // all info has been gathered, so return
     responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
     delete responseQueue[msg.id];
-
   }
-
 }
 
 // helper function that gets the id of the first result with a hierarchy country id
@@ -197,7 +192,6 @@ function getId(results) {
       }
     }
   }
-
 }
 
 // helper function to determine if country should be looked up by id
@@ -233,7 +227,6 @@ function lookupCountryByIdShouldBeCalled(q) {
 
   // return true if there are no results with 'country' Placetype
   return !_.some(q.results, isCountryPlacetype);
-
 }
 
 // helper to determine if all requested layers have been called
