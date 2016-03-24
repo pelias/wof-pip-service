@@ -13,7 +13,6 @@ env:
   global:
     - CXX=g++-4.8
   matrix:
-    - TEST_SUITE=functional
     - TEST_SUITE=units
 script: "npm run $TEST_SUITE"
 addons:
