@@ -81,6 +81,12 @@ module.exports.create = function createPIPService(layers, callback) {
 
           var id = uid(10);
 
+          if (responseQueue.hasOwnProperty(id)) {
+            var msg = "Tried to create responseQueue item with id " + id + " that is already present";
+            logger.error(msg);
+            return responseCallback(null, []);
+          }
+
           // bookkeeping object that tracks the progress of the request
           responseQueue[id] = {
             results: [],
@@ -146,6 +152,11 @@ function lookupCountryById(id, countryId) {
 
 function handleResults(msg) {
   // logger.info('RESULTS:', JSON.stringify(msg, null, 2));
+
+  if (!responseQueue.hasOwnProperty(msg.id)) {
+    logger.error("tried to handle results for missing id " + msg.id);
+    return;
+  }
 
   if (!_.isEmpty(msg.results) ) {
     responseQueue[msg.id].results.push(msg.results);
