@@ -12,9 +12,10 @@ var childProcess = require( 'child_process' );
 var logger = require( 'pelias-logger' ).get( 'wof-pip-service:master' );
 var peliasConfig = require( 'pelias-config' ).generate();
 var async = require('async');
-var uid = require('uid');
 var _ = require('lodash');
 
+
+var requestCount = 0;
 // worker processes keyed on layer
 var workers = {};
 
@@ -79,7 +80,8 @@ module.exports.create = function createPIPService(layers, callback) {
             search_layers = _.intersection(search_layers, layers);
           }
 
-          var id = uid(10);
+          var id = requestCount;
+          requestCount++;
 
           if (responseQueue.hasOwnProperty(id)) {
             var msg = "Tried to create responseQueue item with id " + id + " that is already present";
