@@ -13,46 +13,16 @@ function test_stream(input, testedStream, callback) {
 tape('filterOutDeprecatedRecords', function(test) {
   test.test('undefined/blank values should return false', function(t) {
     var input = [
-      {
-        properties: {
-          'edtf:deprecated': undefined,
-        }
-      },
-      {
-        properties: {
-          'edtf:deprecated': '',
-        }
-      },
-      {
-        properties: {
-          'edtf:deprecated': ' \t ',
-        }
-      },
-      {
-        properties: {
-        }
-      }
+      { properties: { 'edtf:deprecated': undefined } },
+      { properties: { 'edtf:deprecated': '' } },
+      { properties: { 'edtf:deprecated': ' \t ' } },
+      { properties: { } }
     ];
     var expected = [
-      {
-        properties: {
-          'edtf:deprecated': undefined,
-        }
-      },
-      {
-        properties: {
-          'edtf:deprecated': '',
-        }
-      },
-      {
-        properties: {
-          'edtf:deprecated': ' \t ',
-        }
-      },
-      {
-        properties: {
-        }
-      }
+      { properties: { 'edtf:deprecated': undefined } },
+      { properties: { 'edtf:deprecated': '' } },
+      { properties: { 'edtf:deprecated': ' \t ' } },
+      { properties: { } }
     ];
 
     test_stream(input, isActiveRecord.create(), function(err, actual) {
@@ -64,11 +34,7 @@ tape('filterOutDeprecatedRecords', function(test) {
 
   test.test('non-blank values should return true', function(t) {
     var input = [
-      {
-        properties: {
-          'edtf:deprecated': 'some value',
-        }
-      }
+      { properties: { 'edtf:deprecated': 'some value' } }
     ];
     var expected = [];
 
