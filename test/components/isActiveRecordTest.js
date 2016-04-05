@@ -11,17 +11,49 @@ function test_stream(input, testedStream, callback) {
 }
 
 tape('isActiveRecord', function(test) {
-  test.test('undefined/blank values should return true', function(t) {
+  test.test('undefined/blank edtf:deprecated values should return true', function(t) {
     var input = [
       { properties: { 'edtf:deprecated': undefined } },
       { properties: { 'edtf:deprecated': '' } },
-      { properties: { 'edtf:deprecated': ' \t ' } },
-      { properties: { } }
+      { properties: { 'edtf:deprecated': ' \t ' } }
     ];
     var expected = [
       { properties: { 'edtf:deprecated': undefined } },
       { properties: { 'edtf:deprecated': '' } },
-      { properties: { 'edtf:deprecated': ' \t ' } },
+      { properties: { 'edtf:deprecated': ' \t ' } }
+    ];
+
+    test_stream(input, isActiveRecord.create(), function(err, actual) {
+      t.deepEqual(actual, expected, 'should have returned true');
+      t.end();
+    });
+
+  });
+
+  test.test('undefined/blank edtf:superseded values should return true', function(t) {
+    var input = [
+      { properties: { 'edtf:superseded': undefined } },
+      { properties: { 'edtf:superseded': '' } },
+      { properties: { 'edtf:superseded': ' \t ' } }
+    ];
+    var expected = [
+      { properties: { 'edtf:superseded': undefined } },
+      { properties: { 'edtf:superseded': '' } },
+      { properties: { 'edtf:superseded': ' \t ' } }
+    ];
+
+    test_stream(input, isActiveRecord.create(), function(err, actual) {
+      t.deepEqual(actual, expected, 'should have returned true');
+      t.end();
+    });
+
+  });
+
+  test.test('properties without edtf:superseded or edtf:deprecated or mz:is_current should return true', function(t) {
+    var input = [
+      { properties: { } }
+    ];
+    var expected = [
       { properties: { } }
     ];
 
@@ -40,6 +72,32 @@ tape('isActiveRecord', function(test) {
 
     test_stream(input, isActiveRecord.create(), function(err, actual) {
       t.deepEqual(actual, expected, 'should have returned true');
+      t.end();
+    });
+
+  });
+
+  test.test('non-blank edtf:superseded values should return false', function(t) {
+    var input = [
+      { properties: { 'edtf:superseded': 'some value' } }
+    ];
+    var expected = [];
+
+    test_stream(input, isActiveRecord.create(), function(err, actual) {
+      t.deepEqual(actual, expected, 'should have returned false');
+      t.end();
+    });
+
+  });
+
+  test.test('mz:is_current 0 value should return false', function(t) {
+    var input = [
+      { properties: { 'mz:is_current': 0 } }
+    ];
+    var expected = [];
+
+    test_stream(input, isActiveRecord.create(), function(err, actual) {
+      t.deepEqual(actual, expected, 'should have returned false');
       t.end();
     });
 
