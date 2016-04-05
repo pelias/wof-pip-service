@@ -11,7 +11,7 @@ function test_stream(input, testedStream, callback) {
 }
 
 tape('filterOutDeprecatedRecords', function(test) {
-  test.test('undefined/blank values should return false', function(t) {
+  test.test('undefined/blank values should return true', function(t) {
     var input = [
       { properties: { 'edtf:deprecated': undefined } },
       { properties: { 'edtf:deprecated': '' } },
@@ -32,7 +32,7 @@ tape('filterOutDeprecatedRecords', function(test) {
 
   });
 
-  test.test('non-blank values should return true', function(t) {
+  test.test('non-blank edtf:deprecated values should return false', function(t) {
     var input = [
       { properties: { 'edtf:deprecated': 'some value' } }
     ];
