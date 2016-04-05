@@ -10,7 +10,7 @@ function test_stream(input, testedStream, callback) {
     input_stream.pipe(testedStream).pipe(destination_stream);
 }
 
-tape('filterOutDeprecatedRecords', function(test) {
+tape('isActiveRecord', function(test) {
   test.test('undefined/blank values should return true', function(t) {
     var input = [
       { properties: { 'edtf:deprecated': undefined } },
