@@ -1,7 +1,7 @@
 var tape = require('tape');
 var event_stream = require('event-stream');
 
-var filterOutDeprecatedRecords = require('../../src/components/filterOutDeprecatedRecords');
+var isActiveRecord = require('../../src/components/isActiveRecord');
 
 function test_stream(input, testedStream, callback) {
     var input_stream = event_stream.readArray(input);
@@ -55,9 +55,7 @@ tape('filterOutDeprecatedRecords', function(test) {
       }
     ];
 
-    var filter = filterOutDeprecatedRecords.create();
-
-    test_stream(input, filter, function(err, actual) {
+    test_stream(input, isActiveRecord.create(), function(err, actual) {
       t.deepEqual(actual, expected, 'should have returned true');
       t.end();
     });
@@ -74,9 +72,7 @@ tape('filterOutDeprecatedRecords', function(test) {
     ];
     var expected = [];
 
-    var filter = filterOutDeprecatedRecords.create();
-
-    test_stream(input, filter, function(err, actual) {
+    test_stream(input, isActiveRecord.create(), function(err, actual) {
       t.deepEqual(actual, expected, 'should have returned true');
       t.end();
     });
