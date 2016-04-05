@@ -6,7 +6,7 @@ var isValidId = require('./components/isValidId');
 var loadJSON = require('./components/loadJSON');
 var extractFields = require('./components/extractFields');
 var simplifyGeometry = require('./components/simplifyGeometry');
-var filterOutDeprecatedRecords = require('./components/filterOutDeprecatedRecords');
+var isActiveRecord = require('./components/isActiveRecord');
 var filterOutNamelessRecords = require('./components/filterOutNamelessRecords');
 
 /*
@@ -26,7 +26,7 @@ function readData(directory, layer, callback) {
     .pipe(extractId.create())
     .pipe(isValidId.create())
     .pipe(loadJSON.create(directory))
-    .pipe(filterOutDeprecatedRecords.create())
+    .pipe(isActiveRecord.create())
     .pipe(filterOutNamelessRecords.create())
     .pipe(extractFields.create())
     .pipe(simplifyGeometry.create())
