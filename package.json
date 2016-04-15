@@ -6,10 +6,9 @@
   "scripts": {
     "download": "node src/downloadData.js",
     "start": "PELIAS_CONFIG=${PWD}/config.json node server.js",
-    "functional": "PELIAS_CONFIG=${PWD}/config.json node test/functional.js",
+    "functional": "npm run functional",
     "test": "npm run units",
-    "units": "node test/test | tap-dot",
-    "functional": "npm run functional"
+    "units": "node test/test | tap-dot"
   },
   "author": "Mapzen",
   "license": "MIT",
@@ -21,7 +20,7 @@
     "async": "^1.5.2",
     "csv-parse": "^1.0.1",
     "express": "^4.13.4",
-    "fs-extra": "^0.26.5",
+    "fs-extra": "^0.27.0",
     "lodash": "^4.2.1",
     "microtime": "^2.0.0",
     "pelias-config": "^1.0.3",
