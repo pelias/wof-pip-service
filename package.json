@@ -20,7 +20,7 @@
     "async": "^1.5.2",
     "csv-parse": "^1.0.1",
     "express": "^4.13.4",
-    "fs-extra": "^0.28.0",
+    "fs-extra": "^0.29.0",
     "lodash": "^4.2.1",
     "microtime": "^2.0.0",
     "pelias-config": "^1.0.3",
