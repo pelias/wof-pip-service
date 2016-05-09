@@ -36,4 +36,29 @@ tape('loadJSON tests', function(test) {
 
   });
 
+  test.test('invalid JSON should log an error and not pass along anything', function(t) {
+    var input = '123456789';
+
+    // create a directory to hold the temporary file
+    var tmpDirectory = ['data', '123', '456', '789'];
+    fs.mkdirsSync(tmpDirectory.join(path.sep));
+
+    // write the contents to a file
+    var filename = tmpDirectory.concat('123456789.geojson').join(path.sep);
+    fs.writeFileSync(filename, 'this is not json\n');
+
+    var loadJSON = require('../../src/components/loadJSON').create('.');
+
+    test_stream([input], loadJSON, function(err, actual) {
+      // cleanup the tmp directory
+      fs.removeSync(tmpDirectory[0]);
+
+      console.log(actual);
+
+      t.deepEqual(actual, [], 'nothing should have been passed along');
+      t.end();
+    });
+
+  });
+
 });

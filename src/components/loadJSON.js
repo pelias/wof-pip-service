@@ -1,10 +1,11 @@
 var path = require('path');
-var map = require('through2-map');
+var through = require('through2');
+var logger = require( 'pelias-logger' ).get( 'wof-pip-service:loadJSON' );
 var fs = require('fs');
 
 module.exports.create = function(datapath) {
   // parse and return JSON contents
-  return map.obj(function(id, enc, callback) {
+  return through.obj(function(id, enc, next) {
     // id 123456789 -> data/123/456/789/123456789.geojson
     var filename = [
       datapath,
@@ -15,7 +16,14 @@ module.exports.create = function(datapath) {
       id + '.geojson']
     .join(path.sep);
 
-    return JSON.parse(fs.readFileSync(filename));
+    try {
+      this.push(JSON.parse(fs.readFileSync(filename)));
+    }
+    catch (e) {
+      logger.error('exception occured parsing ' + filename + ': ' + e);
+    }
+
+    next();
 
   });
 }
