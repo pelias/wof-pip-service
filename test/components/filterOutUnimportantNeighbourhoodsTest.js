@@ -77,6 +77,24 @@ tape('filterOutUnimportantNeighbourhoods', function(test) {
 
   });
 
+  test.test('neighbourhood placetype with undefined mz:tier_locality should return false', function(t) {
+    var input = [
+      {
+        properties: { 'wof:placetype': 'neighbourhood', 'mz:is_funky': 0 }
+      }
+    ];
+
+    var expected = [];
+
+    var filter = filterOutUnimportantNeighbourhoods.create();
+
+    test_stream(input, filter, function(err, actual) {
+      t.deepEqual(actual, expected, 'should have returned true');
+      t.end();
+    });
+
+  });
+
   test.test('neighbourhood placetype with 6 or 7 mz:tier_locality but mz:is_funky=1 should return false', function(t) {
     var input = [
       {
