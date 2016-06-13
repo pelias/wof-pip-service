@@ -1,9 +1,9 @@
+> This repository is part of the [Pelias](https://github.com/pelias/pelias) project. Pelias is an open-source, open-data geocoder built by [Mapzen](https://www.mapzen.com/) that also powers [Mapzen Search](https://mapzen.com/projects/search). Our official user documentation is [here](https://mapzen.com/documentation/search/).
+
 # Who's on First Point-in-Polygon service
 
-This repository is part of the [Pelias](https://github.com/pelias/pelias)
-project. Pelias is an open-source, open-data geocoder built by
-[Mapzen](https://www.mapzen.com/) that also powers [Mapzen Search](https://mapzen.com/projects/search). Our
-official user documentation is [here](https://mapzen.com/documentation/search/).
+![TravisCI Status](https://travis-ci.org/pelias/wof-pip-service.svg)
+![Gitter badge](https://camo.githubusercontent.com/35e0282de601f7bfa5336efc0328f196b86eff5f/68747470733a2f2f6261646765732e6769747465722e696d2f70656c6961732f70656c6961732e737667)
 
 ## Overview
 This is a point-in-polygon service that uses [Who's on First](http://whosonfirst.mapzen.com/)
