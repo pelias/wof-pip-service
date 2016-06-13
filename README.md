@@ -2,6 +2,8 @@
 
 # Who's on First Point-in-Polygon service
 
+![TravisCI Status](https://travis-ci.org/pelias/wof-pip-service.svg)
+
 ## Overview
 This is a point-in-polygon service that uses [Who's on First](http://whosonfirst.mapzen.com/)
 data. It's used by the [pelias/wof-admin-lookup](https://github.com/pelias/wof-admin-lookup)
