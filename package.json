@@ -1,6 +1,5 @@
 {
   "name": "pelias-wof-pip-service",
-  "version": "1.4.1",
   "description": "Standalone point-in-polygon lookup service'",
   "main": "src/index.js",
   "scripts": {
@@ -8,14 +7,19 @@
     "start": "PELIAS_CONFIG=${PWD}/config.json node server.js",
     "functional": "node test/functional.js",
     "test": "npm run units",
-    "units": "node test/test | tap-dot"
+    "units": "node test/test | tap-dot",
+    "travis": "npm run test",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "author": "Mapzen",
   "license": "MIT",
   "engines": {
     "node": ">= 0.12.0"
   },
-  "repository": "pelias/wof-pip-service",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pelias/wof-pip-service.git"
+  },
   "dependencies": {
     "async": "^1.5.2",
     "csv-parse": "^1.0.1",
@@ -38,6 +42,7 @@
     "deep-diff": "^0.3.3",
     "event-stream": "^3.3.2",
     "tap-dot": "^1.0.0",
-    "tape": "^4.2.2"
+    "tape": "^4.2.2",
+    "semantic-release": "^4.3.5"
   }
 }
