@@ -20,7 +20,7 @@ module.exports.create = function(datapath) {
       this.push(JSON.parse(fs.readFileSync(filename)));
     }
     catch (e) {
-      logger.error('exception occured parsing ' + filename + ': ' + e);
+      //logger.error('exception occured parsing ' + filename + ': ' + e);
     }
 
     next();

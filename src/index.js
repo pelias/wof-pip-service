@@ -8,16 +8,25 @@
 'use strict';
 
 var path = require('path');
-var childProcess = require( 'child_process' );
-var logger = require( 'pelias-logger' ).get( 'wof-pip-service:master' );
-var peliasConfig = require( 'pelias-config' ).generate();
-var async = require('async');
-var _ = require('lodash');
 
+var _ = require('lodash');
+var async = require('async');
+
+var peliasConfig = require( 'pelias-config' ).generate();
+var logger = require( 'pelias-logger' ).get( 'wof-pip-service:master' );
+
+var readStream = require('./readStream');
+var geos = require('../../../node-geos/lib/index.js');
+var STRtree = geos.STRtree;
+var WKTReader = geos.WKTReader;
+
+var reader = new WKTReader();
 
 var requestCount = 0;
 // worker processes keyed on layer
-var workers = {};
+var strtrees = {};
+
+var countriesByID = {};
 
 var responseQueue = {};
 
@@ -34,6 +43,36 @@ var defaultLayers = module.exports.defaultLayers = [
   'neighbourhood', // 62936
   'region' // 4698
 ];
+
+function buildInitialResponseTracker(latitude, longitude, search_layers, responseCallback) {
+  return {
+    results: [],
+    latLon: {latitude: latitude, longitude: longitude},
+    search_layers: search_layers,
+    numberOfLayersCalled: 0,
+    responseCallback: responseCallback,
+    countryLayerHasBeenCalled: false,
+    lookupCountryByIdHasBeenCalled: false
+  };
+}
+
+function calculateSearchLayers(search_layers, layers) {
+  if (search_layers === undefined) {
+    search_layers = layers;
+  } else if (search_layers.length === 1 && search_layers[0] === 'country' && strtrees['country']) {
+    // in the case where only the country layer is to be searched
+    // (and the country layer is loaded), keep search_layers unmodified
+    // so that the country layer is queried directly
+  } else {
+    // take the intersection of the valid layers and the layers sent in
+    // so that if any layers are manually disabled for development
+    // everything still works. this also means invalid layers
+    // are silently ignored
+    search_layers = _.intersection(search_layers, layers);
+  }
+
+  return search_layers;
+}
 
 module.exports.create = function createPIPService(layers, callback) {
   if (!hasDataDirectory()) {
@@ -54,140 +93,149 @@ module.exports.create = function createPIPService(layers, callback) {
     layers = defaultLayers;
   }
 
-  // load all workers, including country, which is a special case
+  // load all layers, including country, which is a special case
   async.forEach(layers.concat('country'), function (layer, done) {
-      startWorker(directory, layer, function (err, worker) {
-        workers[layer] = worker;
-        done();
-      });
-    },
-    function end() {
-      logger.info('PIP Service Loading Completed!!!');
+    loadLayer(directory, layer, function (err, strtree) {
+      strtrees[layer] = strtree;
+      done();
+    });
+  }, function end() {
+    logger.info('PIP Service Loading Completed!!!');
 
-      callback(null, {
-        end: killAllWorkers,
-        lookup: function (latitude, longitude, responseCallback, search_layers) {
-          if (search_layers === undefined) {
-            search_layers = layers;
-          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers['country']) {
-            // in the case where only the country layer is to be searched
-            // (and the country layer is loaded), keep search_layers unmodified
-            // so that the country layer is queried directly
-          } else {
-            // take the intersection of the valid layers and the layers sent in
-            // so that if any layers are manually disabled for development
-            // everything still works. this also means invalid layers
-            // are silently ignored
-            search_layers = _.intersection(search_layers, layers);
-          }
+    callback(null, {
+      end: onEnd,
+      lookup: function (latitude, longitude, responseCallback, search_layers) {
+        search_layers = calculateSearchLayers(search_layers, layers);
 
-          var id = requestCount;
-          requestCount++;
+        var id = requestCount;
+        requestCount++;
 
-          if (responseQueue.hasOwnProperty(id)) {
-            var msg = "Tried to create responseQueue item with id " + id + " that is already present";
-            logger.error(msg);
-            return responseCallback(null, []);
-          }
-
-          // bookkeeping object that tracks the progress of the request
-          responseQueue[id] = {
-            results: [],
-            latLon: {latitude: latitude, longitude: longitude},
-            search_layers: search_layers,
-            numberOfLayersCalled: 0,
-            responseCallback: responseCallback,
-            countryLayerHasBeenCalled: false,
-            lookupCountryByIdHasBeenCalled: false
-          };
-
-          search_layers.forEach(function(layer) {
-            searchWorker(id, workers[layer], {latitude: latitude, longitude: longitude});
-          });
+        if (responseQueue.hasOwnProperty(id)) {
+          var msg = "Tried to create responseQueue item with id " + id + " that is already present";
+          logger.error(msg);
+          return responseCallback(null, []);
         }
-      });
-    }
-  );
+
+        // bookkeeping object that tracks the progress of the request
+        responseQueue[id] = buildInitialResponseTracker(latitude, longitude, search_layers, responseCallback);
+
+        search_layers.forEach(function(layer) {
+          searchStrtree(id, strtrees[layer], {latitude: latitude, longitude: longitude});
+        });
+      }
+    });
+  });
 };
 
-function killAllWorkers() {
-  Object.keys(workers).forEach(function (layer) {
-    workers[layer].kill();
+function onEnd() {
+  // do nothing
+}
+
+function validateFeatureGeometry(feature) {
+  var geometry = feature.geometry;
+  if ('Polygon' === geometry.type) {
+    if (feature.geometry.coordinates.length < 4) {
+      return false;
+    } else {
+      return true;
+    }
+  } else if ('MultiPolygon' === geometry.type) {
+    var ok = true;
+    feature.geometry.coordinates.forEach(function(polygon) {
+      polygon.forEach(function(ring) {
+        if (ring.length != 0 && ring.length < 4) {
+          ok = false;
+        }
+      });
+    });
+    return ok;
+  }
+}
+
+function loadLayer(directory, layer, callback) {
+  readStream(directory, layer, function(features) {
+    logger.info(features.length + ' ' + layer + ' record ids loaded');
+
+    var strtree = new STRtree();
+    var geojsonreader = new geos.GeoJSONReader();
+
+    //features = features.filter(validateFeatureGeometry);
+    features.forEach(function(feature) {
+      var geom = geojsonreader.read(feature.geometry);
+
+      strtree.insert(geom, feature.properties);
+    });
+
+    strtree.build();
+
+    // load countries up into an object keyed on id
+    if ('country' === layer) {
+      countriesByID = features.reduce(function(cumulative, feature) {
+        cumulative[feature.properties.Id] = feature.properties;
+        return cumulative;
+      }, {});
+    }
+
+    logger.info( 'Done loading ' + layer );
+    logger.info(layer + ' finished loading ' + features.length + ' features in ');
+
+    //callback with strtree
+    callback(null, strtree);
   });
 }
 
-function startWorker(directory, layer, callback) {
-  var worker = childProcess.fork(path.join(__dirname, 'worker'));
+var c = 0;
 
-  worker.on('message', function (msg) {
-    if (msg.type === 'loaded') {
-      logger.info(msg, 'Worker ' + msg.layer + ' just told me it loaded!');
-      callback(null, worker);
-    }
+function searchStrtree(id, strtree, coords) {
+  var point = reader.read('POINT ( ' + coords.latitude + ' ' + coords.longitude + ')' );
+  if (!_.isNumber(coords.latitude) || !_.isNumber(coords.longitude)) {
+    console.log(coords);
+    console.log(point);
+  }
 
-    if (msg.type === 'results') {
-      handleResults(msg);
-    }
-  });
-
-  worker.send({
-    type: 'load',
-    layer: layer,
-    directory: directory
-  });
-}
-
-function searchWorker(id, worker, coords) {
-  worker.send({
-    type: 'search',
-    id: id,
-    coords: coords
-  })
+  handleResults(strtree.query(point), id);
 }
 
 function lookupCountryById(id, countryId) {
-  workers.country.send({
-    type: 'lookupById',
-    id: id,
-    countryId: countryId
-  });
+  var country = countriesByID[id] || {};
+  handleResults(country, id);
 }
 
-function handleResults(msg) {
+function handleResults(results, id) {
   // logger.info('RESULTS:', JSON.stringify(msg, null, 2));
 
-  if (!responseQueue.hasOwnProperty(msg.id)) {
-    logger.error("tried to handle results for missing id " + msg.id);
+  if (!responseQueue.hasOwnProperty(id)) {
+    logger.error("tried to handle results for missing id " + id);
     return;
   }
 
-  if (!_.isEmpty(msg.results) ) {
-    responseQueue[msg.id].results.push(msg.results);
+  if (!_.isEmpty(results) ) {
+    responseQueue[id].results.push(results);
   }
-  responseQueue[msg.id].numberOfLayersCalled++;
+  responseQueue[id].numberOfLayersCalled++;
 
   // early exit if we're still waiting on layers to return
-  if (!allLayersHaveBeenCalled(responseQueue[msg.id])) {
+  if (!allLayersHaveBeenCalled(responseQueue[id])) {
     return;
   }
 
   // all layers have been called, so process the results, potentially calling
   //  the country layer or looking up country by id
-  if (countryLayerShouldBeCalled(responseQueue[msg.id], workers)) {
+  if (countryLayerShouldBeCalled(responseQueue[id], strtrees)) {
       // mark that countryLayerHasBeenCalled so it's not called again
-      responseQueue[msg.id].countryLayerHasBeenCalled = true;
+      responseQueue[id].countryLayerHasBeenCalled = true;
 
-      searchWorker(msg.id, workers.country, responseQueue[msg.id].latLon);
-  } else if (lookupCountryByIdShouldBeCalled(responseQueue[msg.id])) {
+      searchStrtree(id, strtrees.country, responseQueue[id].latLon);
+  } else if (lookupCountryByIdShouldBeCalled(responseQueue[id])) {
       // mark that lookupCountryById has already been called so it's not
       //  called again if it returns nothing
-      responseQueue[msg.id].lookupCountryByIdHasBeenCalled = true;
+      responseQueue[id].lookupCountryByIdHasBeenCalled = true;
 
-      lookupCountryById(msg.id, getId(responseQueue[msg.id].results));
+      lookupCountryById(id, getCountryId(responseQueue[id].results));
   } else {
     // all info has been gathered, so return
-    responseQueue[msg.id].responseCallback(null, responseQueue[msg.id].results);
-    delete responseQueue[msg.id];
+    responseQueue[id].responseCallback(null, responseQueue[id].results);
+    delete responseQueue[id];
   }
 }
 
@@ -198,7 +246,7 @@ function handleResults(msg) {
 // it's safe to assume that at least one result has a hierarchy country id value
 //  since the call to `lookupCountryByIdShouldBeCalled` has already confirmed it
 //  and this function is called in combination
-function getId(results) {
+function getCountryId(results) {
   for (var i = 0; i < results.length; i++) {
     for (var j = 0; j < results[i].Hierarchy.length; j++) {
       if (results[i].Hierarchy[j].hasOwnProperty('country_id')) {
@@ -215,7 +263,7 @@ function getId(results) {
 // 3.  lookupCountryByIdHasBeenCalled has already been called
 // 4.  there is already a result with a `country` Placetype
 //
-// in the general case, this function should return true because the country
+// in the general case, this function should return false because the country
 // polygon lookup is normally skipped for performance reasons but country needs
 // to be looked up anyway
 function lookupCountryByIdShouldBeCalled(q) {
@@ -229,7 +277,7 @@ function lookupCountryByIdShouldBeCalled(q) {
     return result.Placetype === 'country';
   }
 
-  // don't call if no (or any) result has a country id
+  // don't call if no results or any result has a country id
   if (q.results.length === 0 || !_.some(q.results, hasCountryId)) {
     return false;
   }

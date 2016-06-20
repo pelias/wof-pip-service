@@ -95,6 +95,6 @@ function handleLookupById(msg) {
 // only process if this is the country worker
 function lookupById(id) {
   if ('country' === context.layer) {
-    return context.byId[id] || {};
+    return context.byid[id] || {};
   }
 }
