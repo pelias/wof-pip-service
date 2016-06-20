@@ -15,12 +15,18 @@ function simplifyGeometry(geometry) {
   if( geometry ) {
     if ('Polygon' === geometry.type) {
       var coordinates = geometry.coordinates[0];
-      geometry.coordinates[0] = simplifyCoords(coordinates);
+      var simplified = simplifyCoords(coordinates);
+      if (simplified.length > 4 || simplified.length == 0) {
+        geometry.coordinates[0] = simplified;
+      }
     }
     else if ('MultiPolygon' === geometry.type) {
       var polygons = geometry.coordinates;
       polygons.forEach(function simplify(coordinates, idx) {
-        polygons[idx][0] = simplifyCoords(coordinates[0]);
+        var simplified = simplifyCoords(coordinates[0]);
+        if (simplified.length > 4 || simplified.length == 0) {
+          polygons[idx][0] = simplified;
+        }
       });
     }
   }
