@@ -8,7 +8,7 @@ var extractFields = require('./components/extractFields');
 var simplifyGeometry = require('./components/simplifyGeometry');
 var isActiveRecord = require('./components/isActiveRecord');
 var filterOutNamelessRecords = require('./components/filterOutNamelessRecords');
-var filterOutUnimportantNeighbourhoods = require('./components/filterOutUnimportantNeighbourhoods');
+var filterOutUnimportantRecords = require('./components/filterOutUnimportantRecords');
 
 /*
   This function finds all the `latest` files in `meta/`, CSV parses them,
@@ -29,7 +29,7 @@ function readData(directory, layer, callback) {
     .pipe(loadJSON.create(directory))
     .pipe(isActiveRecord.create())
     .pipe(filterOutNamelessRecords.create())
-    .pipe(filterOutUnimportantNeighbourhoods.create())
+    .pipe(filterOutUnimportantRecords.create())
     .pipe(extractFields.create())
     .pipe(simplifyGeometry.create())
     .pipe(sink.obj(function(feature) {
