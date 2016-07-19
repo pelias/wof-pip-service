@@ -21,7 +21,7 @@
     "url": "https://github.com/pelias/wof-pip-service.git"
   },
   "dependencies": {
-    "async": "^1.5.2",
+    "async": "^2.0.0",
     "csv-parse": "^1.0.1",
     "express": "^4.13.4",
     "fs-extra": "^0.30.0",
