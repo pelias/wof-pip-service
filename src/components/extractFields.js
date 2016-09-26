@@ -31,6 +31,10 @@ function getName(wofData) {
     return wofData.properties['qs:a2_alt']
   }
 
+  if (wofData.properties.hasOwnProperty('wof:label')) {
+    return wofData.properties['wof:label'];
+  }
+
   return wofData.properties['wof:name'];
 
 }
