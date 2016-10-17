@@ -28,7 +28,7 @@
     "fs-extra": "^0.30.0",
     "lodash": "^4.2.1",
     "microtime": "^2.0.0",
-    "pelias-config": "2.1.0",
+    "pelias-config": "2.2.0",
     "pelias-logger": "0.0.8",
     "polygon-lookup": "2.0.0",
     "simplify-js": "^1.2.1",
