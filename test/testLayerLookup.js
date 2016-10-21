@@ -46,14 +46,15 @@ createPIPService(layers, function (err, pipService) {
 
     var diff = deep(expected, results);
 
+    pipService.end();
+
     if (diff) {
-      console.log('expected and actual output are the same');
+      console.log('expected and actual output are different');
       console.log(diff);
+
       process.exit(1);
     } else {
       console.log('expected and actual output are the same');
     }
-
-    pipService.end();
   });
 });
