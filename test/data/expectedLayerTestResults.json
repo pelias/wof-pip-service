@@ -42,6 +42,32 @@
   ],
   [
     {
+      "Id": 85688161,
+      "Name": "Московская область",
+      "Placetype": "region",
+      "Hierarchy": [
+        {
+          "continent_id": "102191581",
+          "country_id": "85632685",
+          "region_id": 85688161
+        }
+      ]
+    },
+    {
+      "Id": 85632685,
+      "Name": "Russia",
+      "Placetype": "country",
+      "Hierarchy": [
+        {
+          "continent_id": "102191581",
+          "country_id": 85632685,
+          "empire_id": "874393555"
+        }
+      ]
+    }
+  ],
+  [
+    {
       "Id": 85632719,
       "Name": "Bhutan claimed by China",
       "Placetype": "disputed",
