@@ -16,3 +16,11 @@ and an HTTP server that uses this library.
 
 __Notes:__
 - [simplify-js](https://github.com/mourner/simplify-js) is used due to the size of the Who's on First data. Without it, Node.js will run out of memory.
+
+## Configuration
+
+This module uses settings found in [Pelias config](https://www.npmjs.com/package/pelias-config) to locate the Who's on First data using the `imports.whosonfirst.datapath` entry value.  
+
+## Downloading Data
+
+To download data, use `npm download` from [pelias/whosonfirst](https://www.npmjs.com/package/pelias-whosonfirst).  In order to reduce duplicate code between Pelias modules, there is no script to download data in this module.  
