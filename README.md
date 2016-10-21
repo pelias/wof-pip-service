@@ -33,4 +33,4 @@ This module uses settings found in [Pelias config](https://www.npmjs.com/package
 
 ## Downloading Data
 
-To download data, use `npm download` from [pelias/whosonfirst](https://www.npmjs.com/package/pelias-whosonfirst).  In order to reduce duplicate code between Pelias modules, there is no script to download data in this module.  
+To download data, use `npm run download` from [pelias/whosonfirst](https://www.npmjs.com/package/pelias-whosonfirst).  In order to reduce duplicate code between Pelias modules, there is no script to download data in this module.  
