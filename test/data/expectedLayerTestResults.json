@@ -1,25 +1,6 @@
 [
   [
     {
-      "Id": 85632719,
-      "Name": "Bhutan claimed by China",
-      "Placetype": "disputed",
-      "Hierarchy": [
-        {
-          "continent_id": 102191569,
-          "country_id": 85632695,
-          "disputed_id": 85632719
-        },
-        {
-          "continent_id": 102191569,
-          "country_id": 85632171,
-          "disputed_id": 85632719
-        }
-      ]
-    }
-  ],
-  [
-    {
       "Id": 85633041,
       "Name": "Canada",
       "Placetype": "country",
@@ -50,6 +31,20 @@
       ]
     },
     {
+      "Id": 85632695,
+      "Name": "China",
+      "Placetype": "country",
+      "Hierarchy": [
+        {
+          "continent_id": 102191569,
+          "country_id": 85632695,
+          "empire_id": 136253041
+        }
+      ]
+    }
+  ],
+  [
+    {
       "Id": 85669521,
       "Name": "Gasa",
       "Placetype": "region",
@@ -58,6 +53,34 @@
           "continent_id": 102191569,
           "country_id": 85632171,
           "region_id": 85669521
+        }
+      ]
+    },
+    {
+      "Id": 85632719,
+      "Name": "Bhutan claimed by China",
+      "Placetype": "disputed",
+      "Hierarchy": [
+        {
+          "continent_id": 102191569,
+          "country_id": 85632695,
+          "disputed_id": 85632719
+        },
+        {
+          "continent_id": 102191569,
+          "country_id": 85632171,
+          "disputed_id": 85632719
+        }
+      ]
+    },
+    {
+      "Id": 85632171,
+      "Name": "Bhutan",
+      "Placetype": "country",
+      "Hierarchy": [
+        {
+          "continent_id": 102191569,
+          "country_id": 85632171
         }
       ]
     }
