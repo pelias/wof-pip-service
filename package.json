@@ -4,7 +4,6 @@
   "description": "Standalone point-in-polygon lookup service",
   "main": "src/index.js",
   "scripts": {
-    "download": "node src/downloadData.js",
     "start": "node server.js",
     "functional": "node test/functional.js",
     "test": "npm run units",
