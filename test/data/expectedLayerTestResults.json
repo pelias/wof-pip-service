@@ -2,9 +2,7 @@
   [
     {
       "Id": 85633041,
-      "Name": [
-        "Canada"
-      ],
+      "Name": "Canada",
       "Placetype": "country",
       "Hierarchy": [
         {
@@ -17,9 +15,7 @@
   [
     {
       "Id": 85632685,
-      "Name": [
-        "Россия"
-      ],
+      "Name": "Россия",
       "Placetype": "country",
       "Hierarchy": [
         {
@@ -105,9 +101,7 @@
     },
     {
       "Id": 85632171,
-      "Name": [
-        "འབྲུག་ཡུལ་"
-      ],
+      "Name": "འབྲུག་ཡུལ་",
       "Placetype": "country",
       "Hierarchy": [
         {
