@@ -27,7 +27,6 @@
     "express": "^4.13.4",
     "fs-extra": "^0.30.0",
     "lodash": "^4.2.1",
-    "microtime": "^2.0.0",
     "pelias-config": "2.3.0",
     "pelias-logger": "0.1.0",
     "polygon-lookup": "2.1.0",
@@ -40,6 +39,7 @@
   "devDependencies": {
     "deep-diff": "^0.3.3",
     "event-stream": "^3.3.2",
+    "microtime": "^2.0.0",
     "tap-dot": "^1.0.0",
     "tape": "^4.2.2",
     "semantic-release": "^4.3.5"
