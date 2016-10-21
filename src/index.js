@@ -37,7 +37,7 @@ var defaultLayers = module.exports.defaultLayers = [
 
 module.exports.create = function createPIPService(layers, callback) {
   if (!hasDataDirectory()) {
-    logger.error('Could not find whosonfirst data directory in configuration');
+    logger.error('Could not find imports.whosonfirst.datapath in configuration');
     process.exit( 2 );
   }
 
