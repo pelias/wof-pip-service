@@ -1,3 +1,5 @@
+'use strict';
+
 var fs = require('fs');
 var path = require( 'path' );
 
@@ -44,7 +46,7 @@ createPIPService(layers, function (err, pipService) {
     // not to commit this line
     //fs.writeFileSync(expectedPath, JSON.stringify(results, null, 2))
 
-    var diff = deep(expected, results);
+    var diff = deep(sortResults(expected), sortResults(results));
 
     pipService.end();
 
@@ -58,3 +60,27 @@ createPIPService(layers, function (err, pipService) {
     }
   });
 });
+
+/**
+ * Sort result arrays which look like this
+ *
+ * [ [{Id:1}, {Id:2}, {Id:3}], [{Id:5}, {Id:6], [{Id:7}, {Id:8}, {Id:9}] ]
+ */
+function sortResults(results) {
+  // sort the individual result arrays
+  results.forEach(function (a) {
+    a.sort(function (a, b) {
+      if (a.Id > b.Id) return 1;
+      if (a.Id < b.Id) return -1;
+      return 0;
+    });
+  });
+
+  results.sort(function (a, b) {
+    if (a[0].Id > b[0].Id) return 1;
+    if (a[0].Id < b[0].Id) return -1;
+    return 0;
+  });
+
+  return results;
+}
