@@ -102,14 +102,14 @@ function getLocalizedName(wofData, langProperty) {
     var official_lang_key = getOfficialLangName(wofData, langProperty);
 
     // check if that language is available
-    if (wofData.properties.hasOwnProperty(official_lang_key)) {
-      // return the right name if all went well
-      return wofData.properties[official_lang_key][0];
+    var name = getPropertyValue(wofData, official_lang_key);
+    if (name) {
+      return name;
     }
-    else {
-      logger.warn(langProperty, '[missing]', official_lang_key, wofData.properties['wof:name'],
-        wofData.properties['wof:placetype'], wofData.properties['wof:id']);
-    }
+
+    // if corresponding name property wasn't found, log the error
+    logger.warn(langProperty, '[missing]', official_lang_key, wofData.properties['wof:name'],
+      wofData.properties['wof:placetype'], wofData.properties['wof:id']);
   }
   return false;
 }
@@ -122,7 +122,15 @@ function getLocalizedName(wofData, langProperty) {
  * @returns {false|string}
  */
 function getPropertyValue(wofData, property) {
+
   if (wofData.properties.hasOwnProperty(property)) {
+
+    // if the value is an array, return the first item
+    if (wofData.properties[property] instanceof Array) {
+      return wofData.properties[property][0];
+    }
+
+    // otherwise just return the value as is
     return wofData.properties[property];
   }
   return false;
