@@ -96,7 +96,10 @@ function getLocalizedName(wofData, langProperty) {
   // set to unknown or undefined
   if (wofData.properties.hasOwnProperty(langProperty) &&
       !_.isEmpty(wofData.properties[langProperty]) &&
-      langProperty !== 'unk' && langProperty !== 'und') {
+      wofData.properties[langProperty] !== 'unk' &&
+      wofData.properties[langProperty] !== 'und' &&
+      !_.isEqual(wofData.properties[langProperty], ['unk']) &&
+      !_.isEqual(wofData.properties[langProperty], ['und'])) {
 
     // build the preferred lang key to use for name, like 'name:deu_x_preferred'
     var official_lang_key = getOfficialLangName(wofData, langProperty);

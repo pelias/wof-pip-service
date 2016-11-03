@@ -70,6 +70,64 @@ tape('extractFields localized name tests', function(test) {
 
   });
 
+  test.test('wof:lang_x_official === [unk]', function(t) {
+    var input = {
+      properties: {}
+    };
+    input.properties['wof:id'] = 17;
+    input.properties['wof:name'] = 'Feature name';
+    input.properties['wof:lang_x_official'] = ['unk'];
+    input.properties['name:rus_x_preferred'] = ['Russian name'];
+    input.properties['iso:country'] = 'RU';
+    input.properties['wof:placetype'] = 'someplacetype';
+    input.properties['wof:hierarchy'] = 'Feature hierarchy';
+
+    var expected = {
+      properties: {
+        Id: 17,
+        Name: 'Feature name',
+        Placetype: 'someplacetype',
+        Hierarchy: 'Feature hierarchy'
+      },
+      geometry: undefined
+    };
+
+    test_stream([input], extractFields.create(), function(err, actual) {
+      t.deepEqual(actual, [expected], 'should be equal');
+      t.end();
+    });
+
+  });
+
+  test.test('wof:lang_x_official === und', function(t) {
+    var input = {
+      properties: {}
+    };
+    input.properties['wof:id'] = 17;
+    input.properties['wof:name'] = 'Feature name';
+    input.properties['wof:lang_x_official'] = 'und';
+    input.properties['name:rus_x_preferred'] = ['Russian name'];
+    input.properties['iso:country'] = 'RU';
+    input.properties['wof:placetype'] = 'someplacetype';
+    input.properties['wof:hierarchy'] = 'Feature hierarchy';
+
+    var expected = {
+      properties: {
+        Id: 17,
+        Name: 'Feature name',
+        Placetype: 'someplacetype',
+        Hierarchy: 'Feature hierarchy'
+      },
+      geometry: undefined
+    };
+
+    test_stream([input], extractFields.create(), function(err, actual) {
+      t.deepEqual(actual, [expected], 'should be equal');
+      t.end();
+    });
+
+  });
+
   test.test('using wof:lang_x_official', function(t) {
     var input = {
       properties: {}
