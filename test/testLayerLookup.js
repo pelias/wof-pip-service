@@ -86,7 +86,6 @@ function sortResults(results) {
   return results;
 }
 
-
 test(function (err) {
   process.exit(err);
 });

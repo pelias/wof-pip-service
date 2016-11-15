@@ -33,7 +33,6 @@ tape('loadJSON tests', function(test) {
       t.deepEqual(actual, [fileContents], 'should be equal');
       t.end();
     });
-
   });
 
   test.test('invalid JSON should log an error and not pass along anything', function(t) {
@@ -58,7 +57,5 @@ tape('loadJSON tests', function(test) {
       t.deepEqual(actual, [], 'nothing should have been passed along');
       t.end();
     });
-
   });
-
 });

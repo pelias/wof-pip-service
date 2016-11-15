@@ -24,6 +24,5 @@ module.exports.create = function(datapath) {
     }
 
     next();
-
   });
 }
