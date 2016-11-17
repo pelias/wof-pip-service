@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "download": "node src/downloadData.js",
-    "start": "PELIAS_CONFIG=${PWD}/config.json node server.js",
+    "start": "node server.js",
     "testDependencyMode": "node test/testDependencyMode.js",
     "testLayerLookup": "node test/testLayerLookup.js",
     "functional": "npm run testDependencyMode && npm run testLayerLookup",
