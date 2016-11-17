@@ -8,7 +8,7 @@ const logger = require('pelias-logger').get('extractFields');
 module.exports.create = function() {
   // this function extracts the id, name, placetype, hierarchy, and geometry
   return map.obj(function(wofData) {
-    let res = {
+    const res = {
       properties: {
         Id: wofData.properties['wof:id'],
         Name: getName(wofData),
