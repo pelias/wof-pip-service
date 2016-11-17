@@ -2,9 +2,7 @@
   [
     {
       "Id": 85633041,
-      "Name": [
-        "Canada"
-      ],
+      "Name": "Canada",
       "Placetype": "country",
       "Hierarchy": [
         {
@@ -44,34 +42,6 @@
   ],
   [
     {
-      "Id": 85632685,
-      "Name": [
-        "Россия"
-      ],
-      "Placetype": "country",
-      "Hierarchy": [
-        {
-          "continent_id": "102191581",
-          "country_id": 85632685,
-          "empire_id": "874393555"
-        }
-      ]
-    },
-    {
-      "Id": 85688161,
-      "Name": "Московская область",
-      "Placetype": "region",
-      "Hierarchy": [
-        {
-          "continent_id": "102191581",
-          "country_id": "85632685",
-          "region_id": 85688161
-        }
-      ]
-    }
-  ],
-  [
-    {
       "Id": 85632719,
       "Name": "Bhutan claimed by China",
       "Placetype": "disputed",
@@ -90,7 +60,7 @@
     },
     {
       "Id": 85632695,
-      "Name": "China",
+      "Name": "中國",
       "Placetype": "country",
       "Hierarchy": [
         {
@@ -134,9 +104,7 @@
     },
     {
       "Id": 85632171,
-      "Name": [
-        "འབྲུག་ཡུལ་"
-      ],
+      "Name": "འབྲུག་ཡུལ་",
       "Placetype": "country",
       "Hierarchy": [
         {
@@ -159,33 +127,6 @@
         }
       ],
       "Abbrev": "DEU"
-    },
-    {
-      "Id": 85682499,
-      "Name": "Berlin",
-      "Placetype": "region",
-      "Hierarchy": [
-        {
-          "continent_id": 102191581,
-          "country_id": 85633111,
-          "region_id": 85682499
-        }
-      ]
-    }
-  ],
-  [
-    {
-      "Id": 85633111,
-      "Name": [
-        "Deutschland"
-      ],
-      "Placetype": "country",
-      "Hierarchy": [
-        {
-          "continent_id": 102191581,
-          "country_id": 85633111
-        }
-      ]
     },
     {
       "Id": 85682499,
