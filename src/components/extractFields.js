@@ -37,7 +37,7 @@ function getAbbr(wofData) {
   const iso2 = getPropertyValue(wofData, 'wof:country');
 
   // sometimes there are codes set to XX which cause an exception so check if it's a valid ISO2 code
-  if (iso2 !== false && containsIsoCode(iso2)) {
+  if (iso2 !== false && iso3166.is2(iso2)) {
     return iso3166.to3(iso2);
   }
 
@@ -161,16 +161,4 @@ function getPropertyValue(wofData, property) {
     return wofData.properties[property];
   }
   return false;
-}
-
-/**
- * Check that the string is a valid ISO2 code
- *
- * @param {string}
- * @returns {boolean}
- */
-function containsIsoCode(isoCode) {
-  return iso3166.list().some(function(row) {
-    return row.alpha2 === isoCode || row.alpha3 === isoCode;
-  });
 }
