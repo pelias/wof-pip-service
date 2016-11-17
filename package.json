@@ -4,8 +4,11 @@
   "description": "Standalone point-in-polygon lookup service",
   "main": "src/index.js",
   "scripts": {
+    "download": "node src/downloadData.js",
     "start": "node server.js",
-    "functional": "node test/functional.js",
+    "testDependencyMode": "node test/testDependencyMode.js",
+    "testLayerLookup": "node test/testLayerLookup.js",
+    "functional": "npm run testDependencyMode && npm run testLayerLookup",
     "test": "npm run units",
     "units": "node test/test | tap-dot",
     "travis": "npm run test",
@@ -24,6 +27,7 @@
     "async": "^2.0.0",
     "csv-parse": "^1.0.1",
     "express": "^4.13.4",
+    "iso3166-1": "^0.2.8",
     "fs-extra": "^1.0.0",
     "lodash": "^4.2.1",
     "pelias-config": "2.3.1",
@@ -38,9 +42,8 @@
   "devDependencies": {
     "deep-diff": "^0.3.3",
     "event-stream": "^3.3.2",
-    "microtime": "^2.0.0",
+    "semantic-release": "^4.3.5",
     "tap-dot": "^1.0.0",
-    "tape": "^4.2.2",
-    "semantic-release": "^4.3.5"
+    "tape": "^4.2.2"
   }
 }
