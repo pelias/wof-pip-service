@@ -58,4 +58,28 @@ tape('loadJSON tests', function(test) {
       t.end();
     });
   });
+
+  // This test ensures that the path value from the meta file is used, rather than trying to calculate it
+  test.test('data is loaded from path which may not be based on id', function(t) {
+    var inputRecord = { id: '123456789', path: 'this/is/not/the/id/123456789.geojson' };
+
+    // create a directory to hold the temporary file
+    var tmpDirectory = ['data', 'this', 'is', 'not', 'the', 'id'];
+    fs.mkdirsSync(tmpDirectory.join(path.sep));
+
+    // write the contents to a file
+    var filename = tmpDirectory.concat('123456789.geojson').join(path.sep);
+    var fileContents = { a: 1, b: 2 };
+    fs.writeFileSync(filename, JSON.stringify(fileContents) + '\n');
+
+    var loadJSON = require('../../src/components/loadJSON').create('.');
+
+    test_stream([inputRecord], loadJSON, function(err, actual) {
+      // cleanup the tmp directory
+      fs.removeSync(tmpDirectory[0]);
+
+      t.deepEqual(actual, [fileContents], 'should be equal');
+      t.end();
+    });
+  });
 });
