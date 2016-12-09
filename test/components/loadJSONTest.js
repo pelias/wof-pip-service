@@ -13,7 +13,7 @@ function test_stream(input, testedStream, callback) {
 
 tape('loadJSON tests', function(test) {
   test.test('json should be loaded from file', function(t) {
-    var input = '123456789';
+    var inputRecord = { id: '123456789', path: '123/456/789/123456789.geojson' };
 
     // create a directory to hold the temporary file
     var tmpDirectory = ['data', '123', '456', '789'];
@@ -26,7 +26,7 @@ tape('loadJSON tests', function(test) {
 
     var loadJSON = require('../../src/components/loadJSON').create('.');
 
-    test_stream([input], loadJSON, function(err, actual) {
+    test_stream([inputRecord], loadJSON, function(err, actual) {
       // cleanup the tmp directory
       fs.removeSync(tmpDirectory[0]);
 
@@ -36,7 +36,7 @@ tape('loadJSON tests', function(test) {
   });
 
   test.test('invalid JSON should log an error and not pass along anything', function(t) {
-    var input = '123456789';
+    var inputRecord = { id: '123456789', path: '123/467/789/123456789.geojson' };
 
     // create a directory to hold the temporary file
     var tmpDirectory = ['data', '123', '456', '789'];
@@ -48,7 +48,7 @@ tape('loadJSON tests', function(test) {
 
     var loadJSON = require('../../src/components/loadJSON').create('.');
 
-    test_stream([input], loadJSON, function(err, actual) {
+    test_stream([inputRecord], loadJSON, function(err, actual) {
       // cleanup the tmp directory
       fs.removeSync(tmpDirectory[0]);
 
