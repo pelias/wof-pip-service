@@ -2,7 +2,6 @@ var parse = require('csv-parse');
 var fs = require('fs');
 var sink = require('through2-sink');
 var extractId = require('./components/extractId');
-var isValidId = require('./components/isValidId');
 var loadJSON = require('./components/loadJSON');
 var extractFields = require('./components/extractFields');
 var simplifyGeometry = require('./components/simplifyGeometry');
@@ -25,7 +24,6 @@ function readData(directory, layer, callback) {
   fs.createReadStream(directory + 'meta/wof-' + layer + '-latest.csv')
     .pipe(parse(options))
     .pipe(extractId.create())
-    .pipe(isValidId.create())
     .pipe(loadJSON.create(directory))
     .pipe(isActiveRecord.create())
     .pipe(filterOutNamelessRecords.create())
