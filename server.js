@@ -1,3 +1,6 @@
+// validate the WOF configuration before continuing
+require('./src/configValidation').validate(require('pelias-config').generate().imports.whosonfirst);
+
 var createPIPService = require('./src/index.js').create;
 var express = require('express');
 var app = express();
