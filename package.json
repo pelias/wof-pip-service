@@ -1,6 +1,9 @@
 {
   "name": "pelias-wof-pip-service",
   "version": "0.0.0-semantic-release",
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "description": "Standalone point-in-polygon lookup service",
   "main": "src/index.js",
   "scripts": {
@@ -10,6 +13,8 @@
     "testLayerLookup": "node test/testLayerLookup.js",
     "functional": "npm run testDependencyMode && npm run testLayerLookup",
     "test": "npm run units",
+    "lint": "jshint .",
+    "validate": "npm ls",
     "units": "node test/test | tap-dot",
     "travis": "npm run test",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
@@ -44,9 +49,13 @@
     "deep-diff": "^0.3.3",
     "event-stream": "^3.3.2",
     "semantic-release": "^6.3.2",
-    "microtime": "^2.0.0",
     "proxyquire": "^1.7.10",
     "tap-dot": "^1.0.0",
     "tape": "^4.2.2"
-  }
+  },
+  "pre-commit": [
+    "lint",
+    "validate",
+    "test"
+  ]
 }
