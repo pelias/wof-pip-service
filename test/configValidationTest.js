@@ -5,8 +5,44 @@ var tape = require('tape');
 var configValidation = require('../src/configValidation');
 
 tape('tests for looking up hierarchies', function(test) {
-  test.test('config lacking datapath should throw error', function(t) {
-    var config = {};
+  test.test('non-object imports should throw error', function(t) {
+    [null, 17, 'string', [], true].forEach((value) => {
+      var config = {
+        imports: value
+      };
+
+      t.throws(function() {
+        configValidation.validate(config);
+      }, /"imports" must be an object/);
+    });
+
+    t.end();
+
+  });
+
+  test.test('non-object imports.whosonfirst should throw error', function(t) {
+    [null, 17, 'string', [], true].forEach((value) => {
+      var config = {
+        imports: {
+          whosonfirst: value
+        }
+      };
+
+      t.throws(function() {
+        configValidation.validate(config);
+      }, /"whosonfirst" must be an object/);
+    });
+
+    t.end();
+
+  });
+
+  test.test('config lacking imports.whosonfirst.datapath should throw error', function(t) {
+    var config = {
+      imports: {
+        whosonfirst: {}
+      }
+    };
 
     t.throws(function() {
       configValidation.validate(config);
@@ -15,10 +51,14 @@ tape('tests for looking up hierarchies', function(test) {
 
   });
 
-  test.test('non-string datapath should throw error', function(t) {
+  test.test('non-string imports.whosonfirst.datapath should throw error', function(t) {
     [null, 17, {}, [], true].forEach((value) => {
       var config = {
-        datapath: value
+        imports: {
+          whosonfirst: {
+            datapath: value
+          }
+        }
       };
 
       t.throws(function() {
@@ -31,9 +71,13 @@ tape('tests for looking up hierarchies', function(test) {
 
   });
 
-  test.test('string datapath should not throw error', function(t) {
+  test.test('string imports.whosonfirst.datapath should not throw error', function(t) {
     var config = {
-      datapath: 'datapath value'
+      imports: {
+        whosonfirst: {
+          datapath: 'datapath value'
+        }
+      }
     };
 
     t.doesNotThrow(function() {
@@ -46,8 +90,12 @@ tape('tests for looking up hierarchies', function(test) {
 
   test.test('unknown properties should not throw errors', function(t) {
     var config = {
-      datapath: 'datapath value',
-      unknown_property: 'property value'
+      imports: {
+        whosonfirst: {
+          datapath: 'datapath value',
+          unknown_property: 'property value'
+        }
+      }
     };
 
     t.doesNotThrow(function() {

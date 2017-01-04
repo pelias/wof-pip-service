@@ -10,7 +10,6 @@
 var path = require('path');
 var childProcess = require( 'child_process' );
 var logger = require( 'pelias-logger' ).get( 'wof-pip-service:master' );
-var peliasConfig = require( 'pelias-config' ).generate();
 var async = require('async');
 var _ = require('lodash');
 
@@ -35,16 +34,9 @@ var defaultLayers = module.exports.defaultLayers = [
   'region' // 4698
 ];
 
-module.exports.create = function createPIPService(layers, callback) {
-  if (!hasDataDirectory()) {
-    logger.error('Could not find imports.whosonfirst.datapath in configuration');
-    process.exit( 2 );
-  }
-
-  var directory = peliasConfig.imports.whosonfirst.datapath;
-
-  if (!_.endsWith(directory, '/')) {
-    directory = directory + '/';
+module.exports.create = function createPIPService(datapath, layers, callback) {
+  if (!_.endsWith(datapath, '/')) {
+    datapath = datapath + '/';
   }
 
   // if no layers were supplied, then use default layers and the only parameter
@@ -56,7 +48,7 @@ module.exports.create = function createPIPService(layers, callback) {
 
   // load all workers, including country, which is a special case
   async.forEach(layers.concat('country'), function (layer, done) {
-      startWorker(directory, layer, function (err, worker) {
+      startWorker(datapath, layer, function (err, worker) {
         workers[layer] = worker;
         done();
       });
@@ -120,7 +112,7 @@ function killAllWorkers() {
   });
 }
 
-function startWorker(directory, layer, callback) {
+function startWorker(datapath, layer, callback) {
   var worker = childProcess.fork(path.join(__dirname, 'worker'));
 
   worker.on('message', function (msg) {
@@ -137,7 +129,7 @@ function startWorker(directory, layer, callback) {
   worker.send({
     type: 'load',
     layer: layer,
-    directory: directory
+    directory: datapath
   });
 }
 
@@ -261,9 +253,4 @@ function countryLayerShouldBeCalled(q, workers) {
   return q.results.length === 0 && // no non-country layers returned anything
           !q.countryLayerHasBeenCalled &&
           workers.hasOwnProperty('country');
-}
-
-function hasDataDirectory() {
-  return peliasConfig.imports.hasOwnProperty('whosonfirst') &&
-    peliasConfig.imports.whosonfirst.hasOwnProperty('datapath');
 }
