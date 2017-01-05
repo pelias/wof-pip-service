@@ -35,9 +35,8 @@ var defaultLayers = module.exports.defaultLayers = [
 ];
 
 module.exports.create = function createPIPService(datapath, layers, callback) {
-  // if no layers were supplied, then use default layers and the only parameter
-  //  is the callback
-  if (!(layers instanceof Array) && typeof layers === 'function') {
+  // if layers is a function then it's the callback so use the default layers
+  if (_.isFunction(layers)) {
     callback = layers;
     layers = defaultLayers;
   }
