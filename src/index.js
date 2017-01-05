@@ -61,7 +61,7 @@ module.exports.create = function createPIPService(datapath, layers, callback) {
         lookup: function (latitude, longitude, responseCallback, search_layers) {
           if (search_layers === undefined) {
             search_layers = layers;
-          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers.country) {
+          } else if (_.isEqual(search_layers, ['country']) && workers.country) {
             // in the case where only the country layer is to be searched
             // (and the country layer is loaded), keep search_layers unmodified
             // so that the country layer is queried directly
