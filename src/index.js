@@ -10,7 +10,6 @@
 var path = require('path');
 var childProcess = require( 'child_process' );
 var logger = require( 'pelias-logger' ).get( 'wof-pip-service:master' );
-var peliasConfig = require( 'pelias-config' ).generate();
 var async = require('async');
 var _ = require('lodash');
 
@@ -35,16 +34,9 @@ var defaultLayers = module.exports.defaultLayers = [
   'region' // 4698
 ];
 
-module.exports.create = function createPIPService(layers, callback) {
-  if (!hasDataDirectory()) {
-    logger.error('Could not find imports.whosonfirst.datapath in configuration');
-    process.exit( 2 );
-  }
-
-  var directory = peliasConfig.imports.whosonfirst.datapath;
-
-  if (!_.endsWith(directory, '/')) {
-    directory = directory + '/';
+module.exports.create = function createPIPService(datapath, layers, callback) {
+  if (!_.endsWith(datapath, '/')) {
+    datapath = datapath + '/';
   }
 
   // if no layers were supplied, then use default layers and the only parameter
@@ -56,7 +48,7 @@ module.exports.create = function createPIPService(layers, callback) {
 
   // load all workers, including country, which is a special case
   async.forEach(layers.concat('country'), function (layer, done) {
-      startWorker(directory, layer, function (err, worker) {
+      startWorker(datapath, layer, function (err, worker) {
         workers[layer] = worker;
         done();
       });
@@ -69,7 +61,7 @@ module.exports.create = function createPIPService(layers, callback) {
         lookup: function (latitude, longitude, responseCallback, search_layers) {
           if (search_layers === undefined) {
             search_layers = layers;
-          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers['country']) {
+          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers.country) {
             // in the case where only the country layer is to be searched
             // (and the country layer is loaded), keep search_layers unmodified
             // so that the country layer is queried directly
@@ -89,7 +81,7 @@ module.exports.create = function createPIPService(layers, callback) {
           }
 
           if (responseQueue.hasOwnProperty(id)) {
-            var msg = "Tried to create responseQueue item with id " + id + " that is already present";
+            var msg = `Tried to create responseQueue item with id ${id} that is already present`;
             logger.error(msg);
             return responseCallback(null, []);
           }
@@ -120,7 +112,7 @@ function killAllWorkers() {
   });
 }
 
-function startWorker(directory, layer, callback) {
+function startWorker(datapath, layer, callback) {
   var worker = childProcess.fork(path.join(__dirname, 'worker'));
 
   worker.on('message', function (msg) {
@@ -137,7 +129,7 @@ function startWorker(directory, layer, callback) {
   worker.send({
     type: 'load',
     layer: layer,
-    directory: directory
+    directory: datapath
   });
 }
 
@@ -146,7 +138,7 @@ function searchWorker(id, worker, coords) {
     type: 'search',
     id: id,
     coords: coords
-  })
+  });
 }
 
 function lookupCountryById(id, countryId) {
@@ -161,7 +153,7 @@ function handleResults(msg) {
   // logger.info('RESULTS:', JSON.stringify(msg, null, 2));
 
   if (!responseQueue.hasOwnProperty(msg.id)) {
-    logger.error("tried to handle results for missing id " + msg.id);
+    logger.error(`tried to handle results for missing id ${msg.id}`);
     return;
   }
 
@@ -226,12 +218,12 @@ function lookupCountryByIdShouldBeCalled(q) {
   // helper that returns true if at least one Hierarchy of a result has a `country_id` property
   var hasCountryId = function(result) {
     return result.Hierarchy.length > 0 &&
-            _.some(result.Hierarchy, function(h) { return h.hasOwnProperty('country_id')});
-  }
+            _.some(result.Hierarchy, function(h) { return h.hasOwnProperty('country_id');});
+  };
 
   var isCountryPlacetype = function(result) {
     return result.Placetype === 'country';
-  }
+  };
 
   // don't call if no (or any) result has a country id
   if (q.results.length === 0 || !_.some(q.results, hasCountryId)) {
@@ -261,9 +253,4 @@ function countryLayerShouldBeCalled(q, workers) {
   return q.results.length === 0 && // no non-country layers returned anything
           !q.countryLayerHasBeenCalled &&
           workers.hasOwnProperty('country');
-}
-
-function hasDataDirectory() {
-  return peliasConfig.imports.hasOwnProperty('whosonfirst') &&
-    peliasConfig.imports.whosonfirst.hasOwnProperty('datapath');
 }

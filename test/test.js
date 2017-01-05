@@ -1,3 +1,5 @@
+require ('./serverTest.js');
+require ('./configValidationTest.js');
 require ('./components/extractFieldsTest.js');
 require ('./components/loadJSONTest.js');
 require ('./components/simplifyGeometryTest.js');
