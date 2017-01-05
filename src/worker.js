@@ -41,8 +41,8 @@ function handleLoadMsg(msg) {
   context.startTime = Date.now();
 
   readStream(msg.directory, msg.layer, function(features) {
-    logger.info(features.length + ' ' + context.layer + ' record ids loaded in ' + elapsedTime());
-    logger.info(context.layer + ' finished building FeatureCollection in ' + elapsedTime());
+    logger.info(`${features.length} ${context.layer} record ids loaded in ${elapsedTime()}`);
+    logger.info(`${context.layer} finished building FeatureCollection in ${elapsedTime()}`);
 
     context.featureCollection.features = features;
     context.adminLookup = new PolygonLookup( context.featureCollection );
@@ -55,8 +55,8 @@ function handleLoadMsg(msg) {
       }, {});
     }
 
-    logger.info( 'Done loading ' + context.layer );
-    logger.info(context.layer + ' finished loading ' + features.length + ' features in ' + elapsedTime());
+    logger.info( `Done loading ${context.layer}` );
+    logger.info( `${context.layer} finished loading ${features.length} features in ${elapsedTime()}`);
 
     process.send( {type: 'loaded', layer: context.layer} );
 
