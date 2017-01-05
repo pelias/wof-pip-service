@@ -113,7 +113,7 @@ function startWorker(datapath, layer, callback) {
 
   worker.on('message', function (msg) {
     if (msg.type === 'loaded') {
-      logger.info(msg, 'Worker ' + msg.layer + ' just told me it loaded!');
+      logger.info(`${msg.layer} worker loaded ${msg.size} features in ${msg.seconds} seconds`);
       callback(null, worker);
     }
 
