@@ -124,7 +124,7 @@ function startWorker(datapath, layer, callback) {
   worker.send({
     type: 'load',
     layer: layer,
-    directory: datapath
+    datapath: datapath
   });
 }
 
