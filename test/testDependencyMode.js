@@ -55,7 +55,7 @@ function test(callback) {
     });
 
   });
-};
+}
 
 function getMicroSeconds(time) {
   return (time[0] * 1e9 + time[1]) / 1000;
