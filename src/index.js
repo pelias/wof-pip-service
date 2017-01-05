@@ -61,7 +61,7 @@ module.exports.create = function createPIPService(datapath, layers, callback) {
         lookup: function (latitude, longitude, responseCallback, search_layers) {
           if (search_layers === undefined) {
             search_layers = layers;
-          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers['country']) {
+          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers.country) {
             // in the case where only the country layer is to be searched
             // (and the country layer is loaded), keep search_layers unmodified
             // so that the country layer is queried directly
@@ -81,7 +81,7 @@ module.exports.create = function createPIPService(datapath, layers, callback) {
           }
 
           if (responseQueue.hasOwnProperty(id)) {
-            var msg = "Tried to create responseQueue item with id " + id + " that is already present";
+            var msg = `Tried to create responseQueue item with id ${id} that is already present`;
             logger.error(msg);
             return responseCallback(null, []);
           }
@@ -138,7 +138,7 @@ function searchWorker(id, worker, coords) {
     type: 'search',
     id: id,
     coords: coords
-  })
+  });
 }
 
 function lookupCountryById(id, countryId) {
@@ -153,7 +153,7 @@ function handleResults(msg) {
   // logger.info('RESULTS:', JSON.stringify(msg, null, 2));
 
   if (!responseQueue.hasOwnProperty(msg.id)) {
-    logger.error("tried to handle results for missing id " + msg.id);
+    logger.error(`tried to handle results for missing id ${msg.id}`);
     return;
   }
 
@@ -218,12 +218,12 @@ function lookupCountryByIdShouldBeCalled(q) {
   // helper that returns true if at least one Hierarchy of a result has a `country_id` property
   var hasCountryId = function(result) {
     return result.Hierarchy.length > 0 &&
-            _.some(result.Hierarchy, function(h) { return h.hasOwnProperty('country_id')});
-  }
+            _.some(result.Hierarchy, function(h) { return h.hasOwnProperty('country_id');});
+  };
 
   var isCountryPlacetype = function(result) {
     return result.Placetype === 'country';
-  }
+  };
 
   // don't call if no (or any) result has a country id
   if (q.results.length === 0 || !_.some(q.results, hasCountryId)) {
