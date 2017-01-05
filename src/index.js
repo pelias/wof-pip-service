@@ -213,16 +213,11 @@ function getId(results) {
 function lookupCountryByIdShouldBeCalled(q) {
   // helper that returns true if at least one Hierarchy of a result has a `country_id` property
   var hasCountryId = function(result) {
-    return result.Hierarchy.length > 0 &&
-            _.some(result.Hierarchy, function(h) { return h.hasOwnProperty('country_id');});
-  };
-
-  var isCountryPlacetype = function(result) {
-    return result.Placetype === 'country';
+    return _.some(result.Hierarchy, (h) => { return h.hasOwnProperty('country_id');});
   };
 
   // don't call if no (or any) result has a country id
-  if (q.results.length === 0 || !_.some(q.results, hasCountryId)) {
+  if (!_.some(q.results, hasCountryId)) {
     return false;
   }
 
@@ -232,7 +227,8 @@ function lookupCountryByIdShouldBeCalled(q) {
   }
 
   // return true if there are no results with 'country' Placetype
-  return !_.some(q.results, isCountryPlacetype);
+  return !_.some(q.results, (result) => { return result.Placetype === 'country'; } );
+
 }
 
 // helper to determine if all requested layers have been called
