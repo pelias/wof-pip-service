@@ -1,5 +1,6 @@
 var parse = require('csv-parse');
 var fs = require('fs');
+var path = require('path');
 var sink = require('through2-sink');
 var loadJSON = require('./components/loadJSON');
 var extractFields = require('./components/extractFields');
@@ -20,7 +21,7 @@ function readData(directory, layer, callback) {
     columns: true
   };
 
-  fs.createReadStream(directory + 'meta/wof-' + layer + '-latest.csv')
+  fs.createReadStream(path.join(directory, 'meta', `wof-${layer}-latest.csv`))
     .pipe(parse(options))
     .pipe(loadJSON.create(directory))
     .pipe(isActiveRecord.create())
