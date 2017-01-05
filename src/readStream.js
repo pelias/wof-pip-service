@@ -1,3 +1,5 @@
+'use strict';
+
 var parse = require('csv-parse');
 var fs = require('fs');
 var path = require('path');
