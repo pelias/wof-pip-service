@@ -35,13 +35,8 @@ var defaultLayers = module.exports.defaultLayers = [
 ];
 
 module.exports.create = function createPIPService(datapath, layers, callback) {
-  if (!_.endsWith(datapath, '/')) {
-    datapath = datapath + '/';
-  }
-
-  // if no layers were supplied, then use default layers and the only parameter
-  //  is the callback
-  if (!(layers instanceof Array) && typeof layers === 'function') {
+  // if layers is a function then it's the callback so use the default layers
+  if (_.isFunction(layers)) {
     callback = layers;
     layers = defaultLayers;
   }
@@ -61,7 +56,7 @@ module.exports.create = function createPIPService(datapath, layers, callback) {
         lookup: function (latitude, longitude, responseCallback, search_layers) {
           if (search_layers === undefined) {
             search_layers = layers;
-          } else if (search_layers.length === 1 && search_layers[0] === 'country' && workers.country) {
+          } else if (_.isEqual(search_layers, ['country']) && workers.country) {
             // in the case where only the country layer is to be searched
             // (and the country layer is loaded), keep search_layers unmodified
             // so that the country layer is queried directly
@@ -117,7 +112,7 @@ function startWorker(datapath, layer, callback) {
 
   worker.on('message', function (msg) {
     if (msg.type === 'loaded') {
-      logger.info(msg, 'Worker ' + msg.layer + ' just told me it loaded!');
+      logger.info(`${msg.layer} worker loaded ${msg.size} features in ${msg.seconds} seconds`);
       callback(null, worker);
     }
 
@@ -129,7 +124,7 @@ function startWorker(datapath, layer, callback) {
   worker.send({
     type: 'load',
     layer: layer,
-    directory: datapath
+    datapath: datapath
   });
 }
 
@@ -217,16 +212,11 @@ function getId(results) {
 function lookupCountryByIdShouldBeCalled(q) {
   // helper that returns true if at least one Hierarchy of a result has a `country_id` property
   var hasCountryId = function(result) {
-    return result.Hierarchy.length > 0 &&
-            _.some(result.Hierarchy, function(h) { return h.hasOwnProperty('country_id');});
-  };
-
-  var isCountryPlacetype = function(result) {
-    return result.Placetype === 'country';
+    return _.some(result.Hierarchy, (h) => { return h.hasOwnProperty('country_id');});
   };
 
   // don't call if no (or any) result has a country id
-  if (q.results.length === 0 || !_.some(q.results, hasCountryId)) {
+  if (!_.some(q.results, hasCountryId)) {
     return false;
   }
 
@@ -236,7 +226,8 @@ function lookupCountryByIdShouldBeCalled(q) {
   }
 
   // return true if there are no results with 'country' Placetype
-  return !_.some(q.results, isCountryPlacetype);
+  return !_.some(q.results, (result) => { return result.Placetype === 'country'; } );
+
 }
 
 // helper to determine if all requested layers have been called
