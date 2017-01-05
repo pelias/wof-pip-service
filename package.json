@@ -29,6 +29,7 @@
     "express": "^4.13.4",
     "iso3166-1": "^0.2.8",
     "fs-extra": "^1.0.0",
+    "joi": "^10.1.0",
     "lodash": "^4.2.1",
     "pelias-config": "2.4.0",
     "pelias-logger": "0.1.0",
@@ -43,6 +44,7 @@
     "deep-diff": "^0.3.3",
     "event-stream": "^3.3.2",
     "semantic-release": "^6.3.2",
+    "proxyquire": "^1.7.10",
     "tap-dot": "^1.0.0",
     "tape": "^4.2.2"
   }
