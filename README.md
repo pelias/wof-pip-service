@@ -2,6 +2,8 @@
 
 # Who's on First (WOF) Point-in-Polygon service
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/pelias/wof-pip-service.svg)](https://greenkeeper.io/)
+
 ![TravisCI Status](https://travis-ci.org/pelias/wof-pip-service.svg)
 ![Gitter badge](https://camo.githubusercontent.com/35e0282de601f7bfa5336efc0328f196b86eff5f/68747470733a2f2f6261646765732e6769747465722e696d2f70656c6961732f70656c6961732e737667)
 
